@@ -147,6 +147,12 @@ class gwnet(nn.Module):
         x = self.start_conv(x)
         skip = 0
 
+        # calculate the current adaptive adj matrix once per iteration
+        new_supports = None
+        if self.gcn_bool and self.addaptadj and self.supports is not None:
+            adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)), dim=1)
+            new_supports = self.supports + [adp]
+
         # WaveNet layers
         for i in range(self.blocks * self.layers):
 
@@ -183,8 +189,6 @@ class gwnet(nn.Module):
 
             if self.gcn_bool and self.supports is not None:
                 if self.addaptadj:
-                    adp = F.softmax(F.relu(torch.mm(self.nodevec1,self.nodevec2)),dim=1)
-                    new_supports = self.supports + [adp]
                     x = self.gconv[i](x, new_supports)
                 else:
                     x = self.gconv[i](x,self.supports)
