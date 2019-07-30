@@ -4,7 +4,7 @@ This is the original pytorch implementation of Graph WaveNet in the following pa
 [Graph WaveNet for Deep Spatial-Temporal Graph Modeling, IJCAI 2019] (https://arxiv.org/abs/1906.00121).
 
 <p align="center">
-  <img width="350" height="400" src=/fig/model.pdf>
+  <img width="350" height="400" src=./fig/model.png>
 </p>
 
 ## Requirements
