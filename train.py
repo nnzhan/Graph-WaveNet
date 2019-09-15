@@ -154,7 +154,7 @@ def main():
     armse = []
     for i in range(12):
         pred = scaler.inverse_transform(yhat[:,:,i])
-        real = scaler.inverse_transform(realy[:,:,i])
+        real = realy[:,:,i]
         metrics = util.metric(pred,real)
         log = 'Evaluate best model on test data for horizon {:d}, Test MAE: {:.4f}, Test MAPE: {:.4f}, Test RMSE: {:.4f}'
         print(log.format(i+1, metrics[0], metrics[1], metrics[2]))
