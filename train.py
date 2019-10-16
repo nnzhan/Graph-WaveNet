@@ -40,7 +40,7 @@ def main():
     #np.random.seed(args.seed)
     #load data
     device = torch.device(args.device)
-    sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata,args.adjtype)
+    sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
     dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size)
     scaler = dataloader['scaler']
     supports = [torch.tensor(i).to(device) for i in adj_mx]
@@ -55,11 +55,9 @@ def main():
     if args.aptonly:
         supports = None
 
-
-
     engine = trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
-                         args.learning_rate, args.weight_decay, device, supports, args.gcn_bool, args.addaptadj,
-                         adjinit)
+                     args.learning_rate, args.weight_decay, device, supports, args.gcn_bool,
+                     args.addaptadj, adjinit)
 
 
     print("start training...",flush=True)
