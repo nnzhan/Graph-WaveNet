@@ -4,14 +4,14 @@ import argparse
 import time
 import util
 import matplotlib.pyplot as plt
-from engine import trainer
+from engine import Trainer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device',type=str,default='cuda:3',help='')
 parser.add_argument('--data',type=str,default='data/METR-LA',help='data path')
 parser.add_argument('--adjdata',type=str,default='data/sensor_graph/adj_mx.pkl',help='adj data path')
 parser.add_argument('--adjtype',type=str,default='doubletransition',help='adj type')
-parser.add_argument('--gcn_bool',action='store_true',help='whether to add graph convolution layer')
+parser.add_argument('--do_graph_conv',action='store_true',help='whether to add graph convolution layer')
 parser.add_argument('--aptonly',action='store_true',help='whether only adaptive adj')
 parser.add_argument('--addaptadj',action='store_true',help='whether add adaptive adj')
 parser.add_argument('--randomadj',action='store_true',help='whether random initialize adaptive adj')
@@ -39,6 +39,7 @@ def main():
     #torch.manual_seed(args.seed)
     #np.random.seed(args.seed)
     #load data
+    print("HERE")
     device = torch.device(args.device)
     sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
     dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size)
@@ -55,8 +56,8 @@ def main():
     if args.aptonly:
         supports = None
 
-    engine = trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
-                     args.learning_rate, args.weight_decay, device, supports, args.gcn_bool,
+    engine = Trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
+                     args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
                      args.addaptadj, adjinit)
 
 
