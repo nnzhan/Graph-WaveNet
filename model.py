@@ -154,7 +154,7 @@ class GWNet(nn.Module):
             s = x
             s = self.skip_convs[i](s)
             try:  # if i > 0 this works
-                skip = skip[:, :, :,  -s.size(3):]  # Mean/Max Pool?
+                skip = skip[:, :, :,  -s.size(3):]  # TODO(SS): Mean/Max Pool?
                 print(f'i={i}, SKIP={s.size()}')
             except:
                 print(f'i={i}, SKIP={s.size()}, setting skip=0')
@@ -163,14 +163,12 @@ class GWNet(nn.Module):
 
 
             if self.do_graph_conv and self.supports is not None:
-                if self.addaptadj:
-                    x = self.graph_convs[i](x, adjacency_matrices)
-                else:
-                    x = self.graph_convs[i](x, self.supports)
+                support = adjacency_matrices if self.addaptadj else self.supports
+                x = self.graph_convs[i](x, support)
             else:
                 x = self.residual_convs[i](x)
             print(f'x: {x.size()} residual: {residual.size()}')
-            x = x + residual[:, :, :, -x.size(3):] # Mean/Max Pool?
+            x = x + residual[:, :, :, -x.size(3):] # TODO(SS): Mean/Max Pool?
             x = self.bn[i](x)
 
         x = F.relu(skip)
