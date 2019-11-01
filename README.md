@@ -33,7 +33,14 @@ python -m scripts.generate_training_data --output_dir=data/METR-LA --traffic_df_
 python -m scripts.generate_training_data --output_dir=data/PEMS-BAY --traffic_df_filename=data/pems-bay.h5
 
 ```
-## Experiments
+## New Experiment Command
+```
+expid=bs_64
+mkdir $expid
+python train.py --batch_size 64 --learning_rate .004 --do_graph_conv --addaptadj  --randomadj   --save $expid | tee -a $expid.log
+```
+
+## Old Experiment Commands
 Train models configured in Table 3 of the paper.
 
 ```
