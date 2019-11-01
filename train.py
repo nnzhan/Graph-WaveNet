@@ -73,10 +73,10 @@ def main(args):
             best_yet = m.valid_loss
         met_df = pd.concat(metrics).T
         met_df.to_csv(f'{args.save}/metrics.csv')
-    #testing
+    print(f"Training finished. Best Valid Loss")
+    print(met_df.loc[met_df.valid_loss.idxmin()].round(4))
+    # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
-
-
     outputs = []
     realy = torch.Tensor(dataloader['y_test']).to(device)
     realy = realy.transpose(1,3)[:,0,:,:]
@@ -90,9 +90,6 @@ def main(args):
     yhat = torch.cat(outputs,dim=0)
     yhat = yhat[:realy.size(0),...]
 
-
-    print("Training finished")
-    print(f'Valid loss on best model = {met_df.valid_loss.min():.4f}')
     test_met = []
     for i in range(12):
         pred = scaler.inverse_transform(yhat[:,:,i])
@@ -103,6 +100,7 @@ def main(args):
     print(test_met_df.mean().round(3))
 
 def eval_(ds, device, engine):
+    """Run validation."""
     valid_loss = []
     valid_mape = []
     valid_rmse = []

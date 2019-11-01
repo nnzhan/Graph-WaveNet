@@ -7,7 +7,7 @@ class TestTrain(unittest.TestCase):
 
     def test_1_epoch(self):
         args = pickle_load(TEST_ARGS_PATH)
-        args.epochs = 1
+        args.epochs = 2
         args.n_iters = 1
         args.batch_size = 4
         args.n_obs = 4
