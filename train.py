@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from engine import Trainer
 import os
 from durbango import pickle_save
+from pathlib import Path
 
 
 def main(args):
@@ -152,12 +153,13 @@ if __name__ == "__main__":
     parser.add_argument('--print_every', type=int, default=50, help='')
     # parser.add_argument('--seed',type=int,default=99,help='random seed')
     parser.add_argument('--save', type=str, default='experiment', help='save path')
-    parser.add_argument('--expid', default=1, help='experiment id')
+    # parser.add_argument('--expid', default=1, help='experiment id')
     parser.add_argument('--n_iters', default=None, help='quit after this many iterations')
     parser.add_argument('--n_obs', default=None, help='Only use this many observations')
 
     args = parser.parse_args()
     t1 = time.time()
+
     pickle_save(args, f'{args.save}/args.pkl')
     main(args)
     t2 = time.time()
