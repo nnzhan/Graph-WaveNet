@@ -31,8 +31,7 @@ def main(args):
                      args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
                      args.addaptadj, adjinit)
     print("start training...",flush=True)
-    his_loss, train_time = [], [], []
-    metrics = []
+    metrics, train_time = [], []
     best_yet = 100
     for i in range(1,args.epochs+1):
         #if i % 10 == 0:
@@ -64,14 +63,12 @@ def main(args):
                            valid_mape=np.mean(valid_mape),
                            valid_rmse=np.mean(valid_rmse), ))
         metrics.append(m)
-
-        his_loss.append(m.valid_loss)
         print(f'Epoch {i}')
         print(m.round(4))
         if m.valid_loss < best_yet:
             torch.save(engine.model.state_dict(), best_model_save_path)
             best_yet = m.valid_loss
-        met_df = pd.concat(metrics).T
+        met_df = pd.DataFrame(metrics)
         met_df.to_csv(f'{args.save}/metrics.csv')
     print(f"Training finished. Best Valid Loss")
     print(met_df.loc[met_df.valid_loss.idxmin()].round(4))
