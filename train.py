@@ -1,15 +1,13 @@
 import torch
 import numpy as np
+import pandas as pd
 import argparse
 import time
 import util
 import matplotlib.pyplot as plt
 from engine import Trainer
+import os
 from durbango import pickle_save
-
-
-
-
 
 
 def main(args):
@@ -17,11 +15,10 @@ def main(args):
     device = torch.device(args.device)
     sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
     supports = [torch.tensor(i).to(device) for i in adj_mx]
-    dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size)
+    dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size, n_obs=args.n_obs)
     scaler = dataloader['scaler']
-
-
     print(args)
+    best_model_save_path = os.path.join(args.save, 'best_model.pth')
 
     if args.randomadj:
         adjinit = None
@@ -37,7 +34,9 @@ def main(args):
 
 
     print("start training...",flush=True)
-    his_loss, val_time, train_time =[], [], []
+    his_loss, val_time, train_time = [], [], []
+    metrics = []
+    best_yet = 100
     for i in range(1,args.epochs+1):
         #if i % 10 == 0:
             #lr = max(0.000002,args.learning_rate * (0.1 ** (i // 10)))
@@ -57,30 +56,34 @@ def main(args):
             train_rmse.append(rmse)
             if iter % args.print_every == 0 :
                 print(f'Iter: {iter:03d}, Train Loss: {loss:.4f}, Train MAPE: {mape:.4f}, Train RMSE: {rmse:.4f}', flush=True)
+            if args.n_iters is not None and iter >= args.n_iters:
+                break
         train_time.append(time.time()-t1)
         total_time, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device, engine)
         print(f'Epoch: {i:03d}, val time: {total_time} seconds.')
         val_time.append(total_time)
 
+        m = pd.Series(dict(train_loss=np.mean(train_loss),
+                           train_mape=np.mean(train_mape),
+                           train_rmse=np.mean(train_rmse),
+                           valid_loss=np.mean(valid_loss),
+                           valid_mape=np.mean(valid_mape),
+                           valid_rmse=np.mean(valid_rmse), ))
+        metrics.append(m)
 
-        mtrain_loss = np.mean(train_loss)
-        mtrain_mape = np.mean(train_mape)
-        mtrain_rmse = np.mean(train_rmse)
+        his_loss.append(m.valid_loss)
+        print(f'Epoch {i}')
+        print(m.round(4))
 
-        mvalid_loss = np.mean(valid_loss)
-        mvalid_mape = np.mean(valid_mape)
-        mvalid_rmse = np.mean(valid_rmse)
-        his_loss.append(mvalid_loss)
-
-        log = 'Epoch: {:03d}, Train Loss: {:.4f}, Train MAPE: {:.4f}, Train RMSE: {:.4f}, Valid Loss: {:.4f}, Valid MAPE: {:.4f}, Valid RMSE: {:.4f}, Training Time: {:.4f}/epoch'
-        print(log.format(i, mtrain_loss, mtrain_mape, mtrain_rmse, mvalid_loss, mvalid_mape, mvalid_rmse, (t2 - t1)),flush=True)
-        torch.save(engine.model.state_dict(), args.save+"_epoch_"+str(i)+"_"+str(round(mvalid_loss,2))+".pth")
-    print("Average Training Time: {:.4f} secs/epoch".format(np.mean(train_time)))
-    print("Average Inference Time: {:.4f} secs".format(np.mean(val_time)))
-
+        #log = 'Epoch: {:03d}, Train Loss: {:.4f}, Train MAPE: {:.4f}, Train RMSE: {:.4f}, Valid Loss: {:.4f}, Valid MAPE: {:.4f}, Valid RMSE: {:.4f}, Training Time: {:.4f}/epoch'
+        #print(log.format(i, mtrain_loss, mtrain_mape, mtrain_rmse, mvalid_loss, mvalid_mape, mvalid_rmse, time.time() - t1),flush=True)
+        if m.valid_loss < best_yet:
+            torch.save(engine.model.state_dict(), best_model_save_path)
+            best_yet = m.valid_loss
+        met_df = pd.concat(metrics).T
+        met_df.to_csv(f'{args.save}/metrics.csv')
     #testing
-    bestid = np.argmin(his_loss)
-    engine.model.load_state_dict(torch.load(args.save+"_epoch_"+str(bestid+1)+"_"+str(round(his_loss[bestid],2))+".pth"))
+    engine.model.load_state_dict(torch.load(best_model_save_path))
 
 
     outputs = []
@@ -98,28 +101,15 @@ def main(args):
 
 
     print("Training finished")
-    print(f'Valid loss on best model = {his_loss[bestid]:.4f}')
-
-
-    amae = []
-    amape = []
-    armse = []
+    print(f'Valid loss on best model = {met_df.valid_loss.min():.4f}')
+    test_met = []
     for i in range(12):
         pred = scaler.inverse_transform(yhat[:,:,i])
         real = realy[:,:,i]
-        mae,mape,rmse = util.metric(pred,real)
-        print(f'Best model on test data for horizon {i+1}, Test MAE: {mae:.4f}, Test MAPE: {mape:.4f}, Test RMSE: {rmse:.4f}')
-        amae.append(mae)
-        amape.append(mape)
-        armse.append(rmse)
-
-    print(
-        f'On average over 12 horizons, Test MAE: {np.mean(amae):.4f}, Test MAPE: {np.mean(amape):.4f}, Test RMSE: {np.mean(armse):.4f}'
-    )
-
-    save_path = f'{args.save}_exp{args.expid}_best_+{his_loss[bestid]:.2f}.pth'
-    torch.save(engine.model.state_dict(), save_path)
-
+        test_met.append(util.metric(pred,real))
+    test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t').round(3)
+    test_met_df.to_csv(os.path.join(args.save, 'test_metrics.csv'))
+    print(test_met_df.mean().round(3))
 
 def eval_(ds, device, engine):
     valid_loss = []
@@ -163,10 +153,12 @@ if __name__ == "__main__":
     # parser.add_argument('--seed',type=int,default=99,help='random seed')
     parser.add_argument('--save', type=str, default='experiment', help='save path')
     parser.add_argument('--expid', default=1, help='experiment id')
+    parser.add_argument('--n_iters', default=None, help='quit after this many iterations')
+    parser.add_argument('--n_obs', default=None, help='Only use this many observations')
 
     args = parser.parse_args()
     t1 = time.time()
-    pickle_save(args, 'args.pkl')
+    pickle_save(args, f'{args.save}/args.pkl')
     main(args)
     t2 = time.time()
     mins = (t2 - t1)/60
