@@ -12,7 +12,6 @@ from pathlib import Path
 
 
 def main(args):
-    print("HERE")
     device = torch.device(args.device)
     sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
     supports = [torch.tensor(i).to(device) for i in adj_mx]
@@ -28,14 +27,11 @@ def main(args):
 
     if args.aptonly:
         supports = None
-
     engine = Trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
                      args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
                      args.addaptadj, adjinit)
-
-
     print("start training...",flush=True)
-    his_loss, val_time, train_time = [], [], []
+    his_loss, train_time = [], [], []
     metrics = []
     best_yet = 100
     for i in range(1,args.epochs+1):
@@ -55,14 +51,11 @@ def main(args):
             train_loss.append(loss)
             train_mape.append(mape)
             train_rmse.append(rmse)
-            if iter % args.print_every == 0 :
-                print(f'Iter: {iter:03d}, Train Loss: {loss:.4f}, Train MAPE: {mape:.4f}, Train RMSE: {rmse:.4f}', flush=True)
             if args.n_iters is not None and iter >= args.n_iters:
                 break
         train_time.append(time.time()-t1)
         total_time, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device, engine)
-        print(f'Epoch: {i:03d}, val time: {total_time} seconds.')
-        val_time.append(total_time)
+        print(f'Epoch: {i:03d}')
 
         m = pd.Series(dict(train_loss=np.mean(train_loss),
                            train_mape=np.mean(train_mape),
@@ -75,9 +68,6 @@ def main(args):
         his_loss.append(m.valid_loss)
         print(f'Epoch {i}')
         print(m.round(4))
-
-        #log = 'Epoch: {:03d}, Train Loss: {:.4f}, Train MAPE: {:.4f}, Train RMSE: {:.4f}, Valid Loss: {:.4f}, Valid MAPE: {:.4f}, Valid RMSE: {:.4f}, Training Time: {:.4f}/epoch'
-        #print(log.format(i, mtrain_loss, mtrain_mape, mtrain_rmse, mvalid_loss, mvalid_mape, mvalid_rmse, time.time() - t1),flush=True)
         if m.valid_loss < best_yet:
             torch.save(engine.model.state_dict(), best_model_save_path)
             best_yet = m.valid_loss
@@ -150,7 +140,7 @@ if __name__ == "__main__":
     parser.add_argument('--dropout', type=float, default=0.3, help='dropout rate')
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay rate')
     parser.add_argument('--epochs', type=int, default=100, help='')
-    parser.add_argument('--print_every', type=int, default=50, help='')
+    # parser.add_argument('--print_every', type=int, default=50, help='')
     # parser.add_argument('--seed',type=int,default=99,help='random seed')
     parser.add_argument('--save', type=str, default='experiment', help='save path')
     # parser.add_argument('--expid', default=1, help='experiment id')
