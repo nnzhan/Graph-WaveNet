@@ -163,32 +163,6 @@ def load_dataset(dataset_dir, batch_size, valid_batch_size= None, test_batch_siz
     return data
 
 
-def masked_rmse(preds, labels, null_val=np.nan):
-    return torch.sqrt(masked_stat(preds, labels, null_val=null_val, stat='mse'))
-
-def masked_mape(preds, labels, null_val=np.nan):
-    return masked_stat(preds, labels, null_val=null_val, stat='mape')
-
-
-def masked_stat(preds, labels, null_val=np.nan, stat='mae'):
-    if np.isnan(null_val):
-        mask = ~torch.isnan(labels)
-    else:
-        mask = (labels!=null_val)
-    mask = mask.float()
-    mask /= torch.mean(mask)
-    mask = torch.where(torch.isnan(mask), torch.zeros_like(mask), mask)
-    if stat == 'mse':
-        loss = (preds - labels) ** 2
-    elif stat == 'mae':
-        loss = torch.abs(preds-labels)
-    elif stat == 'mape':
-        loss = torch.abs(preds - labels) / labels
-    loss = loss * mask
-    loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
-    return torch.mean(loss)
-
-
 def cheaper_metric(preds, labels, null_val=np.nan):
     if np.isnan(null_val):
         mask = ~torch.isnan(labels)
@@ -200,7 +174,7 @@ def cheaper_metric(preds, labels, null_val=np.nan):
     mse = (preds - labels) ** 2
     mae = torch.abs(preds-labels)
     mape = torch.abs(preds - labels) / labels
-    mae, mape, mse =  [mask_and_fillna(l, mask) for l in [mae, mape, mse]]
+    mae, mape, mse = [mask_and_fillna(l, mask) for l in [mae, mape, mse]]
     rmse = torch.sqrt(mse)
     return mae, mape, rmse
 
@@ -209,10 +183,3 @@ def mask_and_fillna(loss, mask):
     loss = loss * mask
     loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
     return torch.mean(loss)
-
-
-
-def metric(pred, real):
-    mae, mape = [masked_stat(pred, real, null_val=0.0, stat=s).item() for s in ['mae', 'mape']]
-    rmse = masked_rmse(pred, real, null_val=0.,)
-    return mae, mape, rmse
