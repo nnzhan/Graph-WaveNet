@@ -74,18 +74,15 @@ def main(args):
     print(met_df.loc[met_df.valid_loss.idxmin()].round(4))
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
-    outputs = []
-    realy = torch.Tensor(dataloader['y_test']).to(device)
-    realy = realy.transpose(1,3)[:,0,:,:]
 
+    realy = torch.Tensor(dataloader['y_test']).transpose(1,3)[:,0,:,:].to(device)
+    outputs = []
     for iter, (x, y) in enumerate(dataloader['test_loader'].get_iterator()):
         testx = torch.Tensor(x).to(device).transpose(1,3)
         with torch.no_grad():
             preds = engine.model(testx).transpose(1,3)
         outputs.append(preds.squeeze())
-
-    yhat = torch.cat(outputs,dim=0)
-    yhat = yhat[:realy.size(0),...]
+    yhat = torch.cat(outputs, dim=0)[:realy.size(0), ...]
 
     test_met = []
     for i in range(12):
