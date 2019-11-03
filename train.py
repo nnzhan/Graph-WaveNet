@@ -4,11 +4,11 @@ import pandas as pd
 import argparse
 import time
 import util
-import matplotlib.pyplot as plt
 from engine import Trainer
 import os
 from durbango import pickle_save
-from pathlib import Path
+
+from util import calc_test_metrics
 
 
 def main(args):
@@ -74,24 +74,11 @@ def main(args):
     print(met_df.loc[met_df.valid_loss.idxmin()].round(4))
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
-
-    realy = torch.Tensor(dataloader['y_test']).transpose(1,3)[:,0,:,:].to(device)
-    outputs = []
-    for iter, (x, y) in enumerate(dataloader['test_loader'].get_iterator()):
-        testx = torch.Tensor(x).to(device).transpose(1,3)
-        with torch.no_grad():
-            preds = engine.model(testx).transpose(1,3)
-        outputs.append(preds.squeeze())
-    yhat = torch.cat(outputs, dim=0)[:realy.size(0), ...]
-
-    test_met = []
-    for i in range(12):
-        pred = scaler.inverse_transform(yhat[:,:,i])
-        real = realy[:,:,i]
-        test_met.append([x.item() for x in util.cheaper_metric(pred, real)])
-    test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t').round(3)
+    realy = torch.Tensor(dataloader['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
+    test_met_df = calc_test_metrics(engine.model, device, dataloader['test_loader'], scaler, realy)
     test_met_df.to_csv(os.path.join(args.save, 'test_metrics.csv'))
     print(test_met_df.mean().round(3))
+
 
 def eval_(ds, device, engine):
     """Run validation."""

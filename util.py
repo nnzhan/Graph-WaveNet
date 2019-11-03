@@ -1,6 +1,8 @@
 import pickle
 import numpy as np
 import os
+
+import pandas as pd
 import scipy.sparse as sp
 import torch
 from scipy.sparse import linalg
@@ -183,3 +185,20 @@ def mask_and_fillna(loss, mask):
     loss = loss * mask
     loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
     return torch.mean(loss)
+
+
+def calc_test_metrics(model, device, test_loader, scaler, realy):
+    outputs = []
+    for iter, (x, y) in enumerate(test_loader.get_iterator()):
+        testx = torch.Tensor(x).to(device).transpose(1, 3)
+        with torch.no_grad():
+            preds = model(testx).transpose(1, 3)
+        outputs.append(preds.squeeze())
+    yhat = torch.cat(outputs, dim=0)[:realy.size(0), ...]
+    test_met = []
+    for i in range(12):
+        pred = scaler.inverse_transform(yhat[:, :, i])
+        real = realy[:, :, i]
+        test_met.append([x.item() for x in cheaper_metric(pred, real)])
+    test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t').round(3)
+    return test_met_df
