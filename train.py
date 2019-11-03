@@ -88,7 +88,7 @@ def main(args):
     for i in range(12):
         pred = scaler.inverse_transform(yhat[:,:,i])
         real = realy[:,:,i]
-        test_met.append(util.cheaper_metric(pred, real))
+        test_met.append([x.item() for x in util.cheaper_metric(pred, real)])
     test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t').round(3)
     test_met_df.to_csv(os.path.join(args.save, 'test_metrics.csv'))
     print(test_met_df.mean().round(3))

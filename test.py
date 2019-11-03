@@ -25,12 +25,7 @@ parser.add_argument('--dropout',type=float,default=0.3,help='dropout rate')
 parser.add_argument('--weight_decay',type=float,default=0.0001,help='weight decay rate')
 parser.add_argument('--checkpoint',type=str,help='')
 parser.add_argument('--plotheatmap',type=str,default='True',help='')
-
-
 args = parser.parse_args()
-
-
-
 
 def main():
     device = torch.device(args.device)
@@ -76,7 +71,7 @@ def main():
     for i in range(12):
         pred = scaler.inverse_transform(yhat[:,:,i])
         real = realy[:,:,i]
-        metrics = util.cheaper_metric(pred,real)
+        metrics = [x.item() for x in util.cheaper_metric(pred,real)]
         log = 'Evaluate best model on test data for horizon {:d}, Test MAE: {:.4f}, Test MAPE: {:.4f}, Test RMSE: {:.4f}'
         print(log.format(i+1, metrics[0], metrics[1], metrics[2]))
         amae.append(metrics[0])
