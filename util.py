@@ -186,7 +186,6 @@ def mask_and_fillna(loss, mask):
     loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
     return torch.mean(loss)
 
-
 def calc_test_metrics(model, device, test_loader, scaler, realy):
     outputs = []
     for iter, (x, y) in enumerate(test_loader.get_iterator()):
@@ -201,4 +200,4 @@ def calc_test_metrics(model, device, test_loader, scaler, realy):
         real = realy[:, :, i]
         test_met.append([x.item() for x in cheaper_metric(pred, real)])
     test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t').round(3)
-    return test_met_df
+    return test_met_df, yhat

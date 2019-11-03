@@ -69,14 +69,14 @@ def main(args):
             torch.save(engine.model.state_dict(), best_model_save_path)
             best_yet = m.valid_loss
         met_df = pd.DataFrame(metrics)
-        met_df.to_csv(f'{args.save}/metrics.csv')
+        met_df.round(4).to_csv(f'{args.save}/metrics.csv')
     print(f"Training finished. Best Valid Loss")
     print(met_df.loc[met_df.valid_loss.idxmin()].round(4))
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
     realy = torch.Tensor(dataloader['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
-    test_met_df = calc_test_metrics(engine.model, device, dataloader['test_loader'], scaler, realy)
-    test_met_df.to_csv(os.path.join(args.save, 'test_metrics.csv'))
+    test_met_df, _ = calc_test_metrics(engine.model, device, dataloader['test_loader'], scaler, realy)
+    test_met_df.round(4).to_csv(os.path.join(args.save, 'test_metrics.csv'))
     print(test_met_df.mean().round(3))
 
 
