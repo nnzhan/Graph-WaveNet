@@ -163,11 +163,11 @@ def load_dataset(dataset_dir, batch_size, valid_batch_size= None, test_batch_siz
     return data
 
 
-def cheaper_metric(preds, labels, null_val=np.nan):
+def cheaper_metric(preds, labels, null_val=0.):
     if np.isnan(null_val):
         mask = ~torch.isnan(labels)
     else:
-        mask = (labels!=null_val)
+        mask = (labels != null_val)
     mask = mask.float()
     mask /= torch.mean(mask)
     mask = torch.where(torch.isnan(mask), torch.zeros_like(mask), mask)
