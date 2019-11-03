@@ -128,6 +128,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     t1 = time.time()
+    if not os.path.exists(args.save):
+        os.mkdir(args.save)
 
     pickle_save(args, f'{args.save}/args.pkl')
     main(args)
