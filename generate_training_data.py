@@ -69,7 +69,7 @@ def generate_train_val_test(args):
         x_offsets=x_offsets,
         y_offsets=y_offsets,
         add_time_in_day=True,
-        add_day_in_week=False,
+        add_day_in_week=True,
     )
 
     print("x shape: ", x.shape, ", y shape: ", y.shape)
