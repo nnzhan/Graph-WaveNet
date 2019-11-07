@@ -27,14 +27,14 @@ class TestTrain(unittest.TestCase):
         args.save = SAVE_DIR
         main(args)
         df = pd.read_csv(f'{args.save}/metrics.csv', index_col=0)
-        self.assertEqual(df.shape, (2,6))
+        self.assertEqual(df.shape, (2, 6))
         test_df = pd.read_csv(f'{args.save}/test_metrics.csv', index_col=0)
         self.assertEqual(test_df.shape, (12, 3))
 
     def test_test_script(self):
-        train_args = pickle_load(TRAIN_ARGS)
-        test_args = pickle_load('test_script_args.pkl')
-        test_args.checkpoint = train_args.save + '/best_model.pth'
+        test_args = pickle_load(TEST_ARGS)
+        test_args.checkpoint = SAVE_DIR + '/best_model.pth'
+        self.assertTrue(os.path.exists(test_args.checkpoint))
         test_args.n_obs = 2
         test.main(test_args)
 
