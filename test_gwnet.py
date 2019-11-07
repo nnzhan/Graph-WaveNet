@@ -30,11 +30,12 @@ class TestTrain(unittest.TestCase):
         self.assertEqual(df.shape, (2, 6))
         test_df = pd.read_csv(f'{args.save}/test_metrics.csv', index_col=0)
         self.assertEqual(test_df.shape, (12, 3))
-
-    def test_test_script(self):
         test_args = pickle_load(TEST_ARGS)
         test_args.checkpoint = SAVE_DIR + '/best_model.pth'
         self.assertTrue(os.path.exists(test_args.checkpoint))
         test_args.n_obs = 2
         test.main(test_args)
+        new_met = pd.read_csv('last_test_metrics.csv', index_col=0)
+        deltas = test_df.mean() - new_met.mean()
+        self.assertGreaterEqual(.01, deltas.abs().max())
 

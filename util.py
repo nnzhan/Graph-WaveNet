@@ -201,3 +201,12 @@ def calc_test_metrics(model, device, test_loader, scaler, realy):
         test_met.append([x.item() for x in cheaper_metric(pred, real)])
     test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t').round(3)
     return test_met_df, yhat
+
+
+def make_pred_df(realy, yhat, scaler):
+    y12 = realy[:, 99, 11].cpu().detach().numpy()
+    yhat12 = scaler.inverse_transform(yhat[:, 99, 11]).cpu().detach().numpy()
+    y3 = realy[:, 99, 2].cpu().detach().numpy()
+    yhat3 = scaler.inverse_transform(yhat[:, 99, 2]).cpu().detach().numpy()
+    df2 = pd.DataFrame({'real12': y12, 'pred12': yhat12, 'real3': y3, 'pred3': yhat3})
+    return df2

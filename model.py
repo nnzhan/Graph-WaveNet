@@ -34,8 +34,10 @@ class GraphConvNet(nn.Module):
 
 
 class GWNet(nn.Module):
-    def __init__(self, device, num_nodes, dropout=0.3, supports=None, do_graph_conv=True, addaptadj=True, aptinit=None,
-                 in_dim=2, out_dim=12, residual_channels=32, dilation_channels=32, skip_channels=256,
+    def __init__(self, device, num_nodes, dropout=0.3, supports=None, do_graph_conv=True,
+                 addaptadj=True, aptinit=None,
+                 in_dim=2, out_dim=12, residual_channels=32, dilation_channels=32,
+                 skip_channels=256,
                  end_channels=512, kernel_size=2, blocks=4, layers=2):
         super().__init__()
         self.dropout = dropout
