@@ -36,8 +36,7 @@ def main(args):
     for i in range(1,args.epochs+1):
         #if i % 10 == 0:
             #lr = max(0.000002,args.learning_rate * (0.1 ** (i // 10)))
-            #for g in engine.optimizer.param_groups:
-                #g['lr'] = lr
+            #for g in engine.optimizer.param_groups: g['lr'] = lr
         train_loss = []
         train_mape = []
         train_rmse = []

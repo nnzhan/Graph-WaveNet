@@ -10,7 +10,6 @@ from durbango import pickle_save
 
 def main(args):
     device = torch.device(args.device)
-
     _, _, adj_mx = util.load_adj(args.adjdata,args.adjtype)
     supports = [torch.tensor(i).to(device) for i in adj_mx]
     if args.randomadj:

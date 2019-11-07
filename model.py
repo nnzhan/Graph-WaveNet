@@ -4,6 +4,11 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import sys
 
+
+def nconv(x, A):
+    """Multiply along source node axis"""
+    return torch.einsum('ncvl,vw->ncwl', (x, A)).contiguous()
+
 class GraphConvNet(nn.Module):
     def __init__(self, c_in, c_out, dropout, support_len=3, order=2):
         super().__init__()
@@ -12,16 +17,13 @@ class GraphConvNet(nn.Module):
         self.dropout = dropout
         self.order = order
 
-    def nconv(self, x, A):
-        return torch.einsum('ncvl,vw->ncwl', (x, A)).contiguous()
-
     def forward(self, x, support):
         out = [x]
         for a in support:
-            x1 = self.nconv(x,a)
+            x1 = nconv(x, a)
             out.append(x1)
             for k in range(2, self.order + 1):
-                x2 = self.nconv(x1, a)
+                x2 = nconv(x1, a)
                 out.append(x2)
                 x1 = x2
 
