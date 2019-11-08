@@ -76,8 +76,8 @@ class GWNet(nn.Module):
                 nodevec2 = torch.mm(torch.diag(p[:10] ** 0.5), n[:, :10].t())
             self.supports_len += 1
 
-            self.register_parameter('nodevec1', nn.Parameter(nodevec1, requires_grad=True).to(device))
-            self.register_parameter('nodevec2', nn.Parameter(nodevec2, requires_grad=True).to(device))
+            self.register_parameter('nodevec1', nn.Parameter(nodevec1.to(device), requires_grad=True))
+            self.register_parameter('nodevec2', nn.Parameter(nodevec2.to(device), requires_grad=True))
 
         for b in range(blocks):
             additional_scope = kernel_size - 1
