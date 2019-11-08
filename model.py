@@ -70,15 +70,14 @@ class GWNet(nn.Module):
             if aptinit is None:
                 nodevec1 = torch.randn(num_nodes, 10)
                 nodevec2 = torch.randn(10, num_nodes)
-                self.supports_len +=1
             else:
                 m, p, n = torch.svd(aptinit)
                 nodevec1 = torch.mm(m[:, :10], torch.diag(p[:10] ** 0.5))
                 nodevec2 = torch.mm(torch.diag(p[:10] ** 0.5), n[:, :10].t())
             self.supports_len += 1
 
-        self.register_parameter('nodevec1', nn.Parameter(nodevec1, requires_grad=True))
-        self.register_parameter('nodevec2', nn.Parameter(nodevec2, requires_grad=True))
+            self.register_parameter('nodevec1', nn.Parameter(nodevec1, requires_grad=True).to(device))
+            self.register_parameter('nodevec2', nn.Parameter(nodevec2, requires_grad=True).to(device))
 
         for b in range(blocks):
             additional_scope = kernel_size - 1
@@ -107,7 +106,9 @@ class GWNet(nn.Module):
                 receptive_field += additional_scope
                 additional_scope *= 2
                 if self.do_graph_conv:
-                    self.graph_convs.append(GraphConvNet(dilation_channels, residual_channels, dropout, support_len=self.supports_len))
+                    self.graph_convs.append(
+                        GraphConvNet(dilation_channels, residual_channels, dropout,
+                                     support_len=self.supports_len))
 
         self.end_conv_1 = nn.Conv2d(in_channels=skip_channels,
                                     out_channels=end_channels,
