@@ -68,16 +68,17 @@ class GWNet(nn.Module):
         if do_graph_conv and addaptadj:
             if supports is None: self.supports = []
             if aptinit is None:
-                self.nodevec1 = nn.Parameter(torch.randn(num_nodes, 10), requires_grad=True).to(device)
-                self.nodevec2 = nn.Parameter(torch.randn(10, num_nodes), requires_grad=True).to(device)
+                nodevec1 = torch.randn(num_nodes, 10)
+                nodevec2 = torch.randn(10, num_nodes)
                 self.supports_len +=1
             else:
                 m, p, n = torch.svd(aptinit)
-                initemb1 = torch.mm(m[:, :10], torch.diag(p[:10] ** 0.5))
-                initemb2 = torch.mm(torch.diag(p[:10] ** 0.5), n[:, :10].t())
-                self.nodevec1 = nn.Parameter(initemb1, requires_grad=True).to(device)
-                self.nodevec2 = nn.Parameter(initemb2, requires_grad=True).to(device)
-                self.supports_len += 1
+                nodevec1 = torch.mm(m[:, :10], torch.diag(p[:10] ** 0.5))
+                nodevec2 = torch.mm(torch.diag(p[:10] ** 0.5), n[:, :10].t())
+            self.supports_len += 1
+
+        self.register_parameter('nodevec1', nn.Parameter(nodevec1, requires_grad=True))
+        self.register_parameter('nodevec2', nn.Parameter(nodevec2, requires_grad=True))
 
         for b in range(blocks):
             additional_scope = kernel_size - 1
