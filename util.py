@@ -7,6 +7,7 @@ import scipy.sparse as sp
 import torch
 from scipy.sparse import linalg
 
+DEFAULT_DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 class DataLoader(object):
     def __init__(self, xs, ys, batch_size, pad_with_last_sample=True):

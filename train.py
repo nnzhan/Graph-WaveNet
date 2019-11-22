@@ -9,6 +9,7 @@ import os
 from durbango import pickle_save
 
 from util import calc_test_metrics
+from fastprogress import master_bar, progress_bar
 
 
 def main(args):
@@ -33,7 +34,8 @@ def main(args):
     print("start training...",flush=True)
     metrics, train_time = [], []
     best_yet = 100
-    for i in range(1,args.epochs+1):
+    mb = master_bar(list(range(1, args.epochs + 1)))
+    for i in mb:
         #if i % 10 == 0:
             #lr = max(0.000002,args.learning_rate * (0.1 ** (i // 10)))
             #for g in engine.optimizer.param_groups: g['lr'] = lr
@@ -53,7 +55,7 @@ def main(args):
                 break
         train_time.append(time.time()-t1)
         total_time, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device, engine)
-        print(f'Epoch: {i:03d}')
+
 
         m = pd.Series(dict(train_loss=np.mean(train_loss),
                            train_mape=np.mean(train_mape),
@@ -61,8 +63,8 @@ def main(args):
                            valid_loss=np.mean(valid_loss),
                            valid_mape=np.mean(valid_mape),
                            valid_rmse=np.mean(valid_rmse), ))
+        mb.first_bar.comment = f'valid_loss: {m.valid_loss: .3f}'
         metrics.append(m)
-        print(f'Epoch {i}')
         print(m.round(4))
         if m.valid_loss < best_yet:
             torch.save(engine.model.state_dict(), best_model_save_path)

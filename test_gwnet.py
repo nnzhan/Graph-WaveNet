@@ -5,6 +5,7 @@ from durbango import pickle_load
 import pandas as pd
 import os
 import torch
+import util
 import shutil
 
 TRAIN_ARGS = 'test_args.pkl'
@@ -26,6 +27,8 @@ class TestTrain(unittest.TestCase):
         args.batch_size = 2
         args.n_obs = 2
         args.save = SAVE_DIR
+        args.device = util.DEFAULT_DEVICE
+        args.addaptadj = True
         main(args)
         df = pd.read_csv(f'{args.save}/metrics.csv', index_col=0)
         self.assertEqual(df.shape, (args.epochs, 6))
