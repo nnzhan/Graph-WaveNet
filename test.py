@@ -21,7 +21,7 @@ def main(args):
 
     model = GWNet(device, args.num_nodes, args.dropout,
                   supports=supports, do_graph_conv=args.do_graph_conv,
-                  addaptadj=args.addaptadj, aptinit=adjinit
+                  addaptadj=args.addaptadj, aptinit=adjinit, apt_size=args.apt_size,
                   )
     model.to(device)
     model.load_state_dict(torch.load(args.checkpoint))

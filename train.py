@@ -16,7 +16,8 @@ def main(args):
     device = torch.device(args.device)
     sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
     supports = [torch.tensor(i).to(device) for i in adj_mx]
-    dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size, n_obs=args.n_obs)
+    dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size,
+                                   n_obs=args.n_obs)
     scaler = dataloader['scaler']
     print(args)
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
@@ -30,15 +31,15 @@ def main(args):
         supports = None
     engine = Trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
                      args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
-                     args.addaptadj, adjinit)
-    print("start training...",flush=True)
+                     args.addaptadj, adjinit, apt_size=args.apt_size)
+    print("start training...", flush=True)
     metrics, train_time = [], []
     best_yet = 100
     mb = master_bar(list(range(1, args.epochs + 1)))
     for i in mb:
-        #if i % 10 == 0:
-            #lr = max(0.000002,args.learning_rate * (0.1 ** (i // 10)))
-            #for g in engine.optimizer.param_groups: g['lr'] = lr
+        # if i % 10 == 0:
+        # lr = max(0.000002,args.learning_rate * (0.1 ** (i // 10)))
+        # for g in engine.optimizer.param_groups: g['lr'] = lr
         train_loss = []
         train_mape = []
         train_rmse = []
@@ -47,15 +48,15 @@ def main(args):
         for iter, (x, y) in enumerate(dataloader['train_loader'].get_iterator()):
             trainx = torch.Tensor(x).to(device).transpose(1, 3)
             trainy = torch.Tensor(y).to(device).transpose(1, 3)
-            loss, mape, rmse = engine.train(trainx, trainy[:,0,:,:])
+            loss, mape, rmse = engine.train(trainx, trainy[:, 0, :, :])
             train_loss.append(loss)
             train_mape.append(mape)
             train_rmse.append(rmse)
             if args.n_iters is not None and iter >= args.n_iters:
                 break
-        train_time.append(time.time()-t1)
-        total_time, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device, engine)
-
+        train_time.append(time.time() - t1)
+        total_time, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device,
+                                                               engine)
 
         m = pd.Series(dict(train_loss=np.mean(train_loss),
                            train_mape=np.mean(train_mape),
@@ -76,13 +77,12 @@ def main(args):
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
     realy = torch.Tensor(dataloader['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
-    test_met_df, yhat = calc_test_metrics(engine.model, device, dataloader['test_loader'], scaler, realy)
+    test_met_df, yhat = calc_test_metrics(engine.model, device, dataloader['test_loader'], scaler,
+                                          realy)
     test_met_df.round(4).to_csv(os.path.join(args.save, 'test_metrics.csv'))
     print(test_met_df.mean().round(3))
     pred_df = util.make_pred_df(realy, yhat, scaler)
     pred_df.to_csv(os.path.join(args.save, 'preds.csv'))
-
-
 
 
 def eval_(ds, device, engine):
@@ -130,6 +130,7 @@ if __name__ == "__main__":
     # parser.add_argument('--expid', default=1, help='experiment id')
     parser.add_argument('--n_iters', default=None, help='quit after this many iterations')
     parser.add_argument('--n_obs', default=None, help='Only use this many observations')
+    parser.add_argument('--apt_size', default=10)
 
     args = parser.parse_args()
     t1 = time.time()
@@ -139,5 +140,5 @@ if __name__ == "__main__":
     pickle_save(args, f'{args.save}/args.pkl')
     main(args)
     t2 = time.time()
-    mins = (t2 - t1)/60
+    mins = (t2 - t1) / 60
     print(f"Total time spent: {mins:.2f} seconds")

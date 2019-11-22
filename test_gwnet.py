@@ -29,12 +29,14 @@ class TestTrain(unittest.TestCase):
         args.save = SAVE_DIR
         args.device = util.DEFAULT_DEVICE
         args.addaptadj = True
+        args.apt_size = 20
         main(args)
         df = pd.read_csv(f'{args.save}/metrics.csv', index_col=0)
         self.assertEqual(df.shape, (args.epochs, 6))
         test_df = pd.read_csv(f'{args.save}/test_metrics.csv', index_col=0)
         self.assertEqual(test_df.shape, (12, 3))
         test_args = pickle_load(TEST_ARGS)
+        test_args.apt_size = 20
         test_args.checkpoint = SAVE_DIR + '/best_model.pth'
         state_dict = torch.load(test_args.checkpoint)
         assert 'nodevec1' in state_dict

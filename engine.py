@@ -3,9 +3,10 @@ from model import *
 import util
 class Trainer():
     def __init__(self, scaler, in_dim, seq_length, num_nodes, nhid , dropout, lrate, wdecay, device,
-                 supports, gcn_bool, addaptadj, aptinit, clip=5):
+                 supports, gcn_bool, addaptadj, aptinit, clip=5, apt_size=10):
         # TODO(SS): pass model in.
         self.model = GWNet(device, num_nodes, dropout, supports=supports, do_graph_conv=gcn_bool, addaptadj=addaptadj, aptinit=aptinit, in_dim=in_dim,
+                           apt_size=apt_size,
                            out_dim=seq_length, residual_channels=nhid, dilation_channels=nhid, skip_channels=nhid * 8, end_channels=nhid * 16)
         self.model.to(device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=lrate, weight_decay=wdecay)
