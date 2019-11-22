@@ -28,6 +28,7 @@ def main(args):
         adjinit = supports[0]
 
     if args.aptonly:
+        print('WARNING: not using adjacency matrix')
         supports = None
     engine = Trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
                      args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     # parser.add_argument('--expid', default=1, help='experiment id')
     parser.add_argument('--n_iters', default=None, help='quit after this many iterations')
     parser.add_argument('--n_obs', default=None, help='Only use this many observations')
-    parser.add_argument('--apt_size', default=10)
+    parser.add_argument('--apt_size', default=10, type=int)
 
     args = parser.parse_args()
     t1 = time.time()
