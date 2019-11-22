@@ -28,7 +28,7 @@ def main(args):
         adjinit = supports[0]
 
     if args.aptonly:
-        print('WARNING: not using adjacency matrix')
+        if not args.addaptadj: print('WARNING: not using adjacency matrix')
         supports = None
     engine = Trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
                      args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
