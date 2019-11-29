@@ -7,42 +7,40 @@ import util
 from engine import Trainer
 import os
 from durbango import pickle_save
+from fastprogress import progress_bar
 
+from model import GWNet
 from util import calc_test_metrics
-from fastprogress import master_bar, progress_bar
 
 
 def main(args, **model_kwargs):
     device = torch.device(args.device)
-    sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
-    supports = [torch.tensor(i).to(device) for i in adj_mx]
     dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size,
                                    n_obs=args.n_obs)
     scaler = dataloader['scaler']
     print(args)
-
-    best_model_save_path = os.path.join(args.save, 'best_model.pth')
-
+    sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
+    supports = [torch.tensor(i).to(device) for i in adj_mx]
     if args.randomadj:
         aptinit = None
     else:
-        aptinit = supports[0]  # ignored without do_graph_conv
+        aptinit = supports[0]  # ignored without do_graph_conv and add_apt_adj
 
     if args.aptonly:
         if not args.addaptadj: raise ValueError('WARNING: not using adjacency matrix')
         supports = None
-    from model import GWNet
+
     model = GWNet(device, args.num_nodes, args.dropout, supports=supports,
-                  do_graph_conv=args.do_graph_conv,
-                  addaptadj=args.addaptadj, aptinit=aptinit, in_dim=args.in_dim,
-                  apt_size=args.apt_size,
-                  out_dim=args.seq_length, residual_channels=args.nhid, dilation_channels=args.nhid,
+                  do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=aptinit,
+                  in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
+                  residual_channels=args.nhid, dilation_channels=args.nhid,
                   skip_channels=args.nhid * 8, end_channels=args.nhid * 16, **model_kwargs)
     model.to(device)
     engine = Trainer(model, scaler, args.learning_rate, args.weight_decay)
     print("start training...", flush=True)
     metrics, train_time = [], []
-    best_yet = 100
+    best_model_save_path = os.path.join(args.save, 'best_model.pth')
+    lowest_mae_yet = 100  # high value in MPH will get overwritten
     mb = progress_bar(list(range(1, args.epochs + 1)))
     for i in mb:
         # if i % 10 == 0:
@@ -63,31 +61,28 @@ def main(args, **model_kwargs):
             if args.n_iters is not None and iter >= args.n_iters:
                 break
         train_time.append(time.time() - t1)
-        total_time, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device,
-                                                               engine)
+        _, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device, engine)
 
-        m = pd.Series(dict(train_loss=np.mean(train_loss),
-                           train_mape=np.mean(train_mape),
-                           train_rmse=np.mean(train_rmse),
-                           valid_loss=np.mean(valid_loss),
-                           valid_mape=np.mean(valid_mape),
-                           valid_rmse=np.mean(valid_rmse), ))
+        m = dict(train_loss=np.mean(train_loss), train_mape=np.mean(train_mape),
+                 train_rmse=np.mean(train_rmse), valid_loss=np.mean(valid_loss),
+                 valid_mape=np.mean(valid_mape), valid_rmse=np.mean(valid_rmse))
+        m = pd.Series(m)
         mb.comment = f'valid_loss: {m.valid_loss: .3f}'
         metrics.append(m)
         print(m.round(4))
-        if m.valid_loss < best_yet:
+        if m.valid_loss < lowest_mae_yet:
             torch.save(engine.model.state_dict(), best_model_save_path)
-            best_yet = m.valid_loss
+            lowest_mae_yet = m.valid_loss
         met_df = pd.DataFrame(metrics)
         met_df.round(4).to_csv(f'{args.save}/metrics.csv')
-    print(f"Training finished. Best Valid Loss")
+    print(f"Training finished. Best Valid Loss:")
     print(met_df.loc[met_df.valid_loss.idxmin()].round(4))
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
     realy = torch.Tensor(dataloader['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
     test_met_df, yhat = calc_test_metrics(engine.model, device, dataloader['test_loader'], scaler,
                                           realy)
-    test_met_df.round(4).to_csv(os.path.join(args.save, 'test_metrics.csv'))
+    test_met_df.round(6).to_csv(os.path.join(args.save, 'test_metrics.csv'))
     print(test_met_df.mean().round(3))
     pred_df = util.make_pred_df(realy, yhat, scaler)
     pred_df.to_csv(os.path.join(args.save, 'preds.csv'))
