@@ -23,10 +23,9 @@ def main(args, **model_kwargs):
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
 
     if args.randomadj:
-        assert args.addaptadj
         aptinit = None
     else:
-        aptinit = supports[0]
+        aptinit = supports[0]  # ignored without do_graph_conv
 
     if args.aptonly:
         if not args.addaptadj: print('WARNING: not using adjacency matrix')
