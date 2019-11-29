@@ -29,7 +29,7 @@ def main(args, **model_kwargs):
         aptinit = supports[0]  # ignored without do_graph_conv
 
     if args.aptonly:
-        if not args.addaptadj: print('WARNING: not using adjacency matrix')
+        if not args.addaptadj: raise ValueError('WARNING: not using adjacency matrix')
         supports = None
     from model import GWNet
     model = GWNet(device, args.num_nodes, args.dropout, supports=supports,
@@ -43,7 +43,7 @@ def main(args, **model_kwargs):
     print("start training...", flush=True)
     metrics, train_time = [], []
     best_yet = 100
-    mb = master_bar(list(range(1, args.epochs + 1)))
+    mb = progress_bar(list(range(1, args.epochs + 1)))
     for i in mb:
         # if i % 10 == 0:
         # lr = max(0.000002,args.learning_rate * (0.1 ** (i // 10)))
@@ -72,7 +72,7 @@ def main(args, **model_kwargs):
                            valid_loss=np.mean(valid_loss),
                            valid_mape=np.mean(valid_mape),
                            valid_rmse=np.mean(valid_rmse), ))
-        mb.first_bar.comment = f'valid_loss: {m.valid_loss: .3f}'
+        mb.comment = f'valid_loss: {m.valid_loss: .3f}'
         metrics.append(m)
         print(m.round(4))
         if m.valid_loss < best_yet:
