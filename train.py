@@ -20,6 +20,7 @@ def main(args, **model_kwargs):
                                    n_obs=args.n_obs)
     scaler = dataloader['scaler']
     print(args)
+
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
 
     if args.randomadj:
@@ -36,7 +37,7 @@ def main(args, **model_kwargs):
                   addaptadj=args.addaptadj, aptinit=aptinit, in_dim=args.in_dim,
                   apt_size=args.apt_size,
                   out_dim=args.seq_length, residual_channels=args.nhid, dilation_channels=args.nhid,
-                  skip_channels=args.nhid * 8, end_channels=args.nhid * 16)
+                  skip_channels=args.nhid * 8, end_channels=args.nhid * 16, **model_kwargs)
     model.to(device)
     engine = Trainer(model, scaler, args.learning_rate, args.weight_decay)
     print("start training...", flush=True)
