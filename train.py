@@ -40,9 +40,6 @@ def main(args, **model_kwargs):
                   skip_channels=args.nhid * 8, end_channels=args.nhid * 16)
     model.to(device)
     engine = Trainer(model, scaler, args.learning_rate, args.weight_decay)
-    # engine = Trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
-    #                  args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
-    #                  args.addaptadj, adjinit, apt_size=args.apt_size)
     print("start training...", flush=True)
     metrics, train_time = [], []
     best_yet = 100

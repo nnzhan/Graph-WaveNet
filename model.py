@@ -162,6 +162,8 @@ class GWNet(nn.Module):
             except:
                 skip = 0
             skip = s + skip
+            if i == (self.blocks * self.layers -1): # last X getting ignored anyway
+                break
 
             if self.do_graph_conv and self.supports is not None:
                 support = adjacency_matrices if self.addaptadj else self.supports
