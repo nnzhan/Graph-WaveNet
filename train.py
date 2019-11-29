@@ -12,7 +12,7 @@ from util import calc_test_metrics
 from fastprogress import master_bar, progress_bar
 
 
-def main(args):
+def main(args, **model_kwargs):
     device = torch.device(args.device)
     sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
     supports = [torch.tensor(i).to(device) for i in adj_mx]
@@ -23,16 +23,26 @@ def main(args):
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
 
     if args.randomadj:
-        adjinit = None
+        assert args.addaptadj
+        aptinit = None
     else:
-        adjinit = supports[0]
+        aptinit = supports[0]
 
     if args.aptonly:
         if not args.addaptadj: print('WARNING: not using adjacency matrix')
         supports = None
-    engine = Trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
-                     args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
-                     args.addaptadj, adjinit, apt_size=args.apt_size)
+    from model import GWNet
+    model = GWNet(device, args.num_nodes, args.dropout, supports=supports,
+                  do_graph_conv=args.do_graph_conv,
+                  addaptadj=args.addaptadj, aptinit=aptinit, in_dim=args.in_dim,
+                  apt_size=args.apt_size,
+                  out_dim=args.seq_length, residual_channels=args.nhid, dilation_channels=args.nhid,
+                  skip_channels=args.nhid * 8, end_channels=args.nhid * 16)
+    model.to(device)
+    engine = Trainer(model, scaler, args.learning_rate, args.weight_decay)
+    # engine = Trainer(scaler, args.in_dim, args.seq_length, args.num_nodes, args.nhid, args.dropout,
+    #                  args.learning_rate, args.weight_decay, device, supports, args.do_graph_conv,
+    #                  args.addaptadj, adjinit, apt_size=args.apt_size)
     print("start training...", flush=True)
     metrics, train_time = [], []
     best_yet = 100
