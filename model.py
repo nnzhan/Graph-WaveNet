@@ -55,16 +55,11 @@ class GWNet(nn.Module):
         self.start_conv = nn.Conv2d(in_channels=in_dim,
                                     out_channels=residual_channels,
                                     kernel_size=(1,1))
-        self.supports = supports
-
+        self.fixed_supports = supports or []
         receptive_field = 1
 
-        self.supports_len = 0
-        if supports is not None:
-            self.supports_len += len(supports)
-
+        self.supports_len = len(self.fixed_supports)
         if do_graph_conv and addaptadj:
-            if supports is None: self.supports = []
             if aptinit is None:
                 nodevec1 = torch.randn(num_nodes, apt_size)
                 nodevec2 = torch.randn(apt_size, num_nodes)
@@ -76,66 +71,42 @@ class GWNet(nn.Module):
             
             self.register_parameter('nodevec1', nn.Parameter(nodevec1.to(device), requires_grad=True))
             self.register_parameter('nodevec2', nn.Parameter(nodevec2.to(device), requires_grad=True))
-
+        if do_graph_conv:
+            self.graph_convs = nn.ModuleList([GraphConvNet(dilation_channels, residual_channels, dropout, support_len=self.supports_len) for i in range(blocks*layers)])
         for b in range(blocks):
             additional_scope = kernel_size - 1
-            new_dilation = 1
+            D = 1 # dilation
             for i in range(layers):
                 # dilated convolutions
-                self.filter_convs.append(nn.Conv2d(in_channels=residual_channels,
-                                                   out_channels=dilation_channels,
-                                                   kernel_size=(1,kernel_size), dilation=new_dilation))
+                self.filter_convs.append(nn.Conv2d(residual_channels, dilation_channels, kernel_size=(1,kernel_size), dilation=D))
+                self.gate_convs.append(nn.Conv1d(residual_channels, dilation_channels, kernel_size=(1, kernel_size), dilation=D))
 
-                self.gate_convs.append(nn.Conv1d(in_channels=residual_channels,
-                                                 out_channels=dilation_channels,
-                                                 kernel_size=(1, kernel_size), dilation=new_dilation))
-
-                # 1x1 convolution for residual connection
-                self.residual_convs.append(nn.Conv1d(in_channels=dilation_channels,
-                                                     out_channels=residual_channels,
-                                                     kernel_size=(1, 1)))
-
-                # 1x1 convolution for skip connection
-                self.skip_convs.append(nn.Conv1d(in_channels=dilation_channels,
-                                                 out_channels=skip_channels,
-                                                 kernel_size=(1, 1)))
+                # 1x1 convolution for residual and skip connections (slightly different see docstring)
+                self.residual_convs.append(nn.Conv1d(dilation_channels, residual_channels, kernel_size=(1, 1)))
+                self.skip_convs.append(nn.Conv1d(dilation_channels, skip_channels, kernel_size=(1, 1)))
                 self.bn.append(nn.BatchNorm2d(residual_channels))
-                new_dilation *=2
+                D *= 2
                 receptive_field += additional_scope
                 additional_scope *= 2
-                if self.do_graph_conv:
-                    self.graph_convs.append(
-                        GraphConvNet(dilation_channels, residual_channels, dropout,
-                                     support_len=self.supports_len))
 
-        self.end_conv_1 = nn.Conv2d(in_channels=skip_channels,
-                                    out_channels=end_channels,
-                                    kernel_size=(1, 1),
-                                    bias=True)
-
-        self.end_conv_2 = nn.Conv2d(in_channels=end_channels,
-                                    out_channels=out_dim,
-                                    kernel_size=(1, 1),
-                                    bias=True)
+        self.end_conv_1 = nn.Conv2d(skip_channels, end_channels, kernel_size=(1, 1), bias=True)
+        self.end_conv_2 = nn.Conv2d(end_channels, out_dim, kernel_size=(1, 1), bias=True)
 
         self.receptive_field = receptive_field
 
     def forward(self, input):
         # Input shape is (bs, features, n_nodes, n_timesteps)
-        in_len = input.size(3)
-        if in_len<self.receptive_field:
-            x = nn.functional.pad(input, (self.receptive_field - in_len,0,0,0))
-        else:
-            x = input
-        x = self.start_conv(x)
+        if input.size(3) < self.receptive_field:
+            input = nn.functional.pad(input, (self.receptive_field - input.size(3), 0, 0, 0))
+        x = self.start_conv(input)
         skip = 0
 
         # calculate the current adaptive adj matrix once per iteration
-        if self.do_graph_conv and self.addaptadj and self.supports is not None:
+        if self.addaptadj:
             adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)), dim=1)
-            adjacency_matrices = self.supports + [adp]
+            adjacency_matrices = self.fixed_supports + [adp]
         else:
-            adjacency_matrices = self.supports
+            adjacency_matrices = self.fixed_supports
 
         # WaveNet layers
         for i in range(self.blocks * self.layers):
@@ -155,19 +126,17 @@ class GWNet(nn.Module):
             gate = torch.sigmoid(self.gate_convs[i](residual))
             x = filter * gate
             # parametrized skip connection
-            s = x
-            s = self.skip_convs[i](s)
+            s = self.skip_convs[i](x)  # what are we skipping??
             try:  # if i > 0 this works
                 skip = skip[:, :, :,  -s.size(3):]  # TODO(SS): Mean/Max Pool?
             except:
                 skip = 0
             skip = s + skip
-            if i == (self.blocks * self.layers -1): # last X getting ignored anyway
+            if i == (self.blocks * self.layers - 1):  # last X getting ignored anyway
                 break
 
-            if self.do_graph_conv and self.supports is not None:
-                support = adjacency_matrices if self.addaptadj else self.supports
-                x = self.graph_convs[i](x, support)
+            if self.do_graph_conv:
+                x = self.graph_convs[i](x, adjacency_matrices)
             else:
                 x = self.residual_convs[i](x)
             x = x + residual[:, :, :, -x.size(3):] # TODO(SS): Mean/Max Pool?
