@@ -100,13 +100,11 @@ class GWNet(nn.Module):
             input = nn.functional.pad(input, (self.receptive_field - input.size(3), 0, 0, 0))
         x = self.start_conv(input)
         skip = 0
-
+        adjacency_matrices = self.fixed_supports
         # calculate the current adaptive adj matrix once per iteration
         if self.addaptadj:
             adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)), dim=1)
             adjacency_matrices = self.fixed_supports + [adp]
-        else:
-            adjacency_matrices = self.fixed_supports
 
         # WaveNet layers
         for i in range(self.blocks * self.layers):
