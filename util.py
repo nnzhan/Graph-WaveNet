@@ -9,6 +9,12 @@ from scipy.sparse import linalg
 
 DEFAULT_DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
+
+def calc_trainable_params(model):
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    return params
+
 class DataLoader(object):
     def __init__(self, xs, ys, batch_size, pad_with_last_sample=True):
         """
@@ -198,20 +204,16 @@ def calc_test_metrics(model, device, test_loader, scaler, realy):
     test_met = []
     for i in range(12):
         pred = scaler.inverse_transform(yhat[:, :, i])
-        pred = torch.clamp(pred, min=0., max=70.)
         real = realy[:, :, i]
         test_met.append([x.item() for x in cheaper_metric(pred, real)])
     test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t').round(3)
     return test_met_df, yhat
 
 
-def _to_ser(arr):
-    return pd.DataFrame(arr.cpu().detach().numpy()).stack().rename_axis(['obs', 'sensor_id'])
-
-
 def make_pred_df(realy, yhat, scaler):
-    df = pd.DataFrame(dict(y12=_to_ser(realy[:, :, 11]),
-                           yhat12=_to_ser(scaler.inverse_transform(yhat[:, :, 11])).clip(0, 70),
-                           y3=_to_ser(realy[:, :, 2]),
-                           yhat3=_to_ser(scaler.inverse_transform(yhat[:, :, 2])).clip(0, 70)))
-    return df
+    y12 = realy[:, 99, 11].cpu().detach().numpy()
+    yhat12 = scaler.inverse_transform(yhat[:, 99, 11]).cpu().detach().numpy()
+    y3 = realy[:, 99, 2].cpu().detach().numpy()
+    yhat3 = scaler.inverse_transform(yhat[:, 99, 2]).cpu().detach().numpy()
+    df2 = pd.DataFrame({'real12': y12, 'pred12': yhat12, 'real3': y3, 'pred3': yhat3})
+    return df2
