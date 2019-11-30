@@ -12,6 +12,14 @@ TRAIN_ARGS = 'test_args.pkl'
 TEST_ARGS = 'test_script_args.pkl'
 SAVE_DIR = 'utest_experiment/'
 
+def modify_args(args, updates):
+    for k,v in updates.items():
+        setattr(args, k, v)
+    return args
+
+{'epochs': 1, 'n_iters': 1, 'batch_size':2, 'n_obs': 2, 'device': util.DEFAULT_DEVICE,
+'save': SAVE_DIR, 'addaptadj': True, 'apt_size': 20, 'nhid': 2}
+
 class TestTrain(unittest.TestCase):
 
     @classmethod
@@ -30,6 +38,7 @@ class TestTrain(unittest.TestCase):
         args.device = util.DEFAULT_DEVICE
         args.addaptadj = True
         args.apt_size = 20
+        args.nhid = 2
         main(args)
         df = pd.read_csv(f'{args.save}/metrics.csv', index_col=0)
         self.assertEqual(df.shape, (args.epochs, 6))
@@ -42,6 +51,7 @@ class TestTrain(unittest.TestCase):
         assert 'nodevec1' in state_dict
         self.assertTrue(os.path.exists(test_args.checkpoint))
         test_args.n_obs = 2
+        test_args.nhid = 2
         test.main(test_args)
         new_met = pd.read_csv('last_test_metrics.csv', index_col=0)
         deltas = test_df.mean() - new_met.mean()

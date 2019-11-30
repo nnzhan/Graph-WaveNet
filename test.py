@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def main(args):
+def main(args, **model_kwargs):
     device = torch.device(args.device)
     _, _, adj_mx = util.load_adj(args.adjdata,args.adjtype)
     supports = [torch.tensor(i).to(device) for i in adj_mx]
@@ -19,10 +19,17 @@ def main(args):
     if args.aptonly:
         supports = None
 
-    model = GWNet(device, args.num_nodes, args.dropout,
-                  supports=supports, do_graph_conv=args.do_graph_conv,
-                  addaptadj=args.addaptadj, aptinit=adjinit, apt_size=args.apt_size,
-                  )
+    # model = GWNet(device, args.num_nodes, args.dropout,
+    #               supports=supports, do_graph_conv=args.do_graph_conv,
+    #               addaptadj=args.addaptadj, aptinit=adjinit, apt_size=args.apt_size,
+    #
+    #
+    #               )
+    model = GWNet(device, args.num_nodes, args.dropout, supports=supports,
+                  do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=adjinit,
+                  in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
+                  residual_channels=args.nhid, dilation_channels=args.nhid,
+                  skip_channels=args.nhid * 8, end_channels=args.nhid * 16, **model_kwargs)
     model.to(device)
     model.load_state_dict(torch.load(args.checkpoint))
     model.eval()

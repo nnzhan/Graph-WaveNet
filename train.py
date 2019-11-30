@@ -18,7 +18,6 @@ def main(args, **model_kwargs):
     dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size,
                                    n_obs=args.n_obs)
     scaler = dataloader['scaler']
-    print(args)
     sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
     supports = [torch.tensor(i).to(device) for i in adj_mx]
     if args.randomadj:
