@@ -198,6 +198,7 @@ def calc_test_metrics(model, device, test_loader, scaler, realy):
     test_met = []
     for i in range(12):
         pred = scaler.inverse_transform(yhat[:, :, i])
+        pred = torch.clamp(pred, min=0., max=70.)
         real = realy[:, :, i]
         test_met.append([x.item() for x in cheaper_metric(pred, real)])
     test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t').round(3)
