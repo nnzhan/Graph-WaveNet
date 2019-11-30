@@ -12,9 +12,8 @@ class Trainer():
         self.model.train()
         self.optimizer.zero_grad()
         input = nn.functional.pad(input,(1,0,0,0))
-        output = self.model(input).transpose(1,3) # output = [batch_size,12,num_nodes,1]
+        output = self.model(input).transpose(1,3) # now, output = [batch_size,1,num_nodes,12]
         predict = self.scaler.inverse_transform(output)
-
         real = torch.unsqueeze(real_val, dim=1)
         mae, mape, rmse = util.cheaper_metric(predict, real, null_val=0.0)
         mae.backward()
