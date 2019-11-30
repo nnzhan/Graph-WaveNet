@@ -204,10 +204,12 @@ def calc_test_metrics(model, device, test_loader, scaler, realy):
     return test_met_df, yhat
 
 
+def _to_ser(arr):
+    return pd.DataFrame(arr.cpu().detach().numpy()).stack().rename_axis(['obs', 'sensor_id'])
+
+
 def make_pred_df(realy, yhat, scaler):
-    y12 = realy[:, 99, 11].cpu().detach().numpy()
-    yhat12 = scaler.inverse_transform(yhat[:, 99, 11]).cpu().detach().numpy()
-    y3 = realy[:, 99, 2].cpu().detach().numpy()
-    yhat3 = scaler.inverse_transform(yhat[:, 99, 2]).cpu().detach().numpy()
-    df2 = pd.DataFrame({'real12': y12, 'pred12': yhat12, 'real3': y3, 'pred3': yhat3})
-    return df2
+    return pd.DataFrame(dict(y12=_to_ser(realy[:, :, 11]),
+                             yhat12=_to_ser(scaler.inverse_transform(yhat[:, :, 11])),
+                             y3=_to_ser(realy[:, :, 2]),
+                             yhat3=_to_ser(scaler.inverse_transform(yhat[:, :, 2]))))
