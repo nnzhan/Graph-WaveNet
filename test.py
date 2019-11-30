@@ -39,18 +39,14 @@ def main(args, **model_kwargs):
     realy = torch.Tensor(dataloader['y_test']).to(device)
     realy = realy.transpose(1,3)[:,0,:,:]
     met_df, yhat = util.calc_test_metrics(model, device, dataloader['test_loader'], scaler, realy)
-    print(met_df)
-    print(met_df.mean().round(4))
-    met_df.round(4).to_csv('last_test_metrics.csv')
-
-
-
     df2 = util.make_pred_df(realy, yhat, scaler)
+    met_df.to_csv('last_test_metrics.csv')
     df2.to_csv('./wave.csv', index=False)
+
 
     if args.plotheatmap == "True":
         plot_learned_adj_matrix(model)
-
+    return met_df, df2
 
 def plot_learned_adj_matrix(model):
     adp = F.softmax(F.relu(torch.mm(model.nodevec1, model.nodevec2)), dim=1)

@@ -209,7 +209,8 @@ def _to_ser(arr):
 
 
 def make_pred_df(realy, yhat, scaler):
-    return pd.DataFrame(dict(y12=_to_ser(realy[:, :, 11]),
-                             yhat12=_to_ser(scaler.inverse_transform(yhat[:, :, 11])),
-                             y3=_to_ser(realy[:, :, 2]),
-                             yhat3=_to_ser(scaler.inverse_transform(yhat[:, :, 2]))))
+    df = pd.DataFrame(dict(y12=_to_ser(realy[:, :, 11]),
+                           yhat12=_to_ser(scaler.inverse_transform(yhat[:, :, 11])).clip(0, 70),
+                           y3=_to_ser(realy[:, :, 2]),
+                           yhat3=_to_ser(scaler.inverse_transform(yhat[:, :, 2])).clip(0, 70)))
+    return df
