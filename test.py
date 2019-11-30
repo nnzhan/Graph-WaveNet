@@ -43,23 +43,22 @@ def main(args, **model_kwargs):
     print(met_df.mean().round(4))
     met_df.round(4).to_csv('last_test_metrics.csv')
 
-    if args.plotheatmap == "True":
-        plot_heatmap(model)
+
 
     df2 = util.make_pred_df(realy, yhat, scaler)
-
     df2.to_csv('./wave.csv', index=False)
 
+    if args.plotheatmap == "True":
+        plot_learned_adj_matrix(model)
 
-def plot_heatmap(model):
+
+def plot_learned_adj_matrix(model):
     adp = F.softmax(F.relu(torch.mm(model.nodevec1, model.nodevec2)), dim=1)
-    device = torch.device('cpu')
-    adp.to(device)
     adp = adp.cpu().detach().numpy()
-    adp = adp * (1 / np.max(adp))
+    adp = adp / np.max(adp)
     df = pd.DataFrame(adp)
     sns.heatmap(df, cmap="RdYlBu")
-    plt.savefig("./emb" + '.pdf')
+    plt.savefig("heatmap.png")
 
 
 if __name__ == "__main__":
