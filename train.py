@@ -60,6 +60,7 @@ def main(args, **model_kwargs):
             if args.n_iters is not None and iter >= args.n_iters:
                 break
         train_time.append(time.time() - t1)
+        engine.scheduler.step()
         _, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device, engine)
 
         m = dict(train_loss=np.mean(train_loss), train_mape=np.mean(train_mape),

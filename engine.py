@@ -2,11 +2,13 @@ import torch.optim as optim
 from model import *
 import util
 class Trainer():
-    def __init__(self, model, scaler, lrate, wdecay, clip=5):
+    def __init__(self, model, scaler, lrate, wdecay, clip=5, lr_decay_rate=.97):
         self.model = model
         self.optimizer = optim.Adam(self.model.parameters(), lr=lrate, weight_decay=wdecay)
         self.scaler = scaler
         self.clip = clip
+        l1 = lambda epoch: lr_decay_rate ** epoch
+        self.scheduler = optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=l1)
 
     def train(self, input, real_val):
         self.model.train()
