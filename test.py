@@ -78,7 +78,7 @@ if __name__ == "__main__":
     parser.add_argument('--dropout', type=float, default=0.3, help='dropout rate')
     # parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay rate')
     parser.add_argument('--checkpoint', type=str, help='')
-    parser.add_argument('--plotheatmap', type=str, default='True', help='')
+    parser.add_argument('--plotheatmap', action='store_true')
     parser.add_argument('--n_obs', default=None, help='Only use this many observations')
     args = parser.parse_args()
     main(args)

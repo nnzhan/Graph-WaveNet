@@ -176,7 +176,7 @@ def cheaper_metric(preds, labels, null_val=0.):
     mask = torch.where(torch.isnan(mask), torch.zeros_like(mask), mask)
     mse = (preds - labels) ** 2
     mae = torch.abs(preds-labels)
-    mape = torch.abs(preds - labels) / labels
+    mape = mae / labels
     mae, mape, mse = [mask_and_fillna(l, mask) for l in [mae, mape, mse]]
     rmse = torch.sqrt(mse)
     return mae, mape, rmse
