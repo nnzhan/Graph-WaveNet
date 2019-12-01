@@ -14,7 +14,7 @@ class Trainer():
         self.model.train()
         self.optimizer.zero_grad()
         input = nn.functional.pad(input,(1,0,0,0))
-        output = self.model(input).transpose(1,3) # now, output = [batch_size,1,num_nodes,12]
+        output = self.model(input).transpose(1,3)  # now, output = [batch_size,1,num_nodes,12]
         #torch.clamp(output, 0, 70)
 
         predict = self.scaler.inverse_transform(output)
