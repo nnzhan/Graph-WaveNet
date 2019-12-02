@@ -72,8 +72,6 @@ def main(args, **model_kwargs):
                                           realy)
     test_met_df.round(6).to_csv(os.path.join(args.save, 'test_metrics.csv'))
     print(summary(args.save))
-    pred_df = util.make_pred_df(realy, yhat, scaler)
-    #pred_df.to_csv(os.path.join(args.save, 'preds.csv'))
 
 
 def eval_(ds, device, engine):
