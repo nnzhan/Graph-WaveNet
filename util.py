@@ -238,8 +238,6 @@ def get_shared_arg_parser():
     parser.add_argument('--batch_size', type=int, default=64, help='batch size')
     parser.add_argument('--dropout', type=float, default=0.3, help='dropout rate')
     parser.add_argument('--n_obs', default=None, help='Only use this many observations')
-    parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay rate')
-    parser.add_argument('--learning_rate', type=float, default=0.001, help='learning rate')
     parser.add_argument('--apt_size', default=10, type=int)
     parser.add_argument('--softmax_temp', default=1., type=float)
     return parser
