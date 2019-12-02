@@ -35,10 +35,12 @@ class GraphConvNet(nn.Module):
 
 class GWNet(nn.Module):
     def __init__(self, device, num_nodes, dropout=0.3, supports=None, do_graph_conv=True,
+                 softmax_eps=0.,
                  addaptadj=True, aptinit=None, in_dim=2, out_dim=12, residual_channels=32, dilation_channels=32,
                  skip_channels=256, end_channels=512, kernel_size=2, blocks=4, layers=2, apt_size=10):
         super().__init__()
         self.dropout = dropout
+        self.softmax_eps = softmax_eps
         self.blocks = blocks
         self.layers = layers
         self.do_graph_conv = do_graph_conv
@@ -103,7 +105,7 @@ class GWNet(nn.Module):
         adjacency_matrices = self.fixed_supports
         # calculate the current adaptive adj matrix once per iteration
         if self.addaptadj:
-            adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)), dim=1)
+            adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)) + self.softmax_eps, dim=1)
             adjacency_matrices = self.fixed_supports + [adp]
 
         # WaveNet layers
