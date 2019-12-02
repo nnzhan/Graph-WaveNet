@@ -55,12 +55,11 @@ class GWNet(nn.Module):
         self.supports_len = len(self.fixed_supports)
         if do_graph_conv and addaptadj:
             if aptinit is None:
-                nodevec1, nodevec2 = torch.randn(num_nodes, apt_size), torch.randn(apt_size, num_nodes)
+                nodevecs = torch.randn(num_nodes, apt_size), torch.randn(apt_size, num_nodes)
             else:
-                nodevec1, nodevec2 = self.svd_init(apt_size, aptinit)
+                nodevecs = self.svd_init(apt_size, aptinit)
             self.supports_len += 1
-            self.register_parameter('nodevec1', Parameter(nodevec1.to(device), requires_grad=True))
-            self.register_parameter('nodevec2', Parameter(nodevec2.to(device), requires_grad=True))
+            self.nodevec1, self.nodevec2 = [Parameter(n.to(device), requires_grad=True) for n in nodevecs]
 
         depth = list(range(blocks * layers))
 
