@@ -62,14 +62,14 @@ class GWNet(nn.Module):
             self.register_parameter('nodevec1', Parameter(nodevec1.to(device), requires_grad=True))
             self.register_parameter('nodevec2', Parameter(nodevec2.to(device), requires_grad=True))
 
-        depth = blocks * layers
+        depth = list(range(blocks * layers))
 
         # 1x1 convolution for residual and skip connections (slightly different see docstring)
-        self.residual_convs = ModuleList([Conv1d(dilation_channels, residual_channels, (1, 1)) for _ in range(depth)])
-        self.skip_convs = ModuleList([Conv1d(dilation_channels, skip_channels, (1, 1)) for _ in range(depth)])
-        self.bn = ModuleList([BatchNorm2d(residual_channels) for _ in range(depth)])
+        self.residual_convs = ModuleList([Conv1d(dilation_channels, residual_channels, (1, 1)) for _ in depth])
+        self.skip_convs = ModuleList([Conv1d(dilation_channels, skip_channels, (1, 1)) for _ in depth])
+        self.bn = ModuleList([BatchNorm2d(residual_channels) for _ in depth])
         self.graph_convs = ModuleList([GraphConvNet(dilation_channels, residual_channels, dropout, support_len=self.supports_len)
-                                              for _ in range(depth)])
+                                              for _ in depth])
 
         self.filter_convs = ModuleList()
         self.gate_convs = ModuleList()
@@ -78,7 +78,7 @@ class GWNet(nn.Module):
             D = 1 # dilation
             for i in range(layers):
                 # dilated convolutions
-                self.filter_convs.append(Conv2d(residual_channels, dilation_channels, (1,kernel_size), dilation=D))
+                self.filter_convs.append(Conv2d(residual_channels, dilation_channels, (1, kernel_size), dilation=D))
                 self.gate_convs.append(Conv1d(residual_channels, dilation_channels, (1, kernel_size), dilation=D))
                 D *= 2
                 receptive_field += additional_scope
