@@ -241,4 +241,5 @@ def get_shared_arg_parser():
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay rate')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='learning rate')
     parser.add_argument('--apt_size', default=10, type=int)
+    parser.add_argument('--softmax_temp', default=1., type=float)
     return parser

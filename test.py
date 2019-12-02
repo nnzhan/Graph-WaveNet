@@ -17,11 +17,12 @@ def main(args, **model_kwargs):
 
     if args.aptonly:
         supports = None
-    model = GWNet(device, args.num_nodes, args.dropout, supports=supports,
-                  do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=adjinit,
-                  in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
-                  residual_channels=args.nhid, dilation_channels=args.nhid,
-                  skip_channels=args.nhid * 8, end_channels=args.nhid * 16, **model_kwargs)
+    model = GWNet.from_args(args, device, supports, adjinit, **model_kwargs)
+    # model = GWNet(device, args.num_nodes, args.dropout, supports=supports,
+    #               do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=adjinit,
+    #               in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
+    #               residual_channels=args.nhid, dilation_channels=args.nhid,
+    #               skip_channels=args.nhid * 8, end_channels=args.nhid * 16, **model_kwargs)
     model.to(device)
     model.load_state_dict(torch.load(args.checkpoint))
     model.eval()
@@ -36,8 +37,7 @@ def main(args, **model_kwargs):
     df2.to_csv('./wave.csv', index=False)
 
 
-    if args.plotheatmap == "True":
-        plot_learned_adj_matrix(model)
+    if args.plotheatmap: plot_learned_adj_matrix(model)
     return met_df, df2
 
 def plot_learned_adj_matrix(model):

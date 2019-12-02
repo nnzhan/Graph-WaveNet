@@ -29,11 +29,7 @@ def main(args, **model_kwargs):
         if not args.addaptadj: raise ValueError('WARNING: not using adjacency matrix')
         supports = None
 
-    model = GWNet(device, args.num_nodes, args.dropout, supports=supports,
-                  do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=aptinit,
-                  in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
-                  residual_channels=args.nhid, dilation_channels=args.nhid,
-                  skip_channels=args.nhid * 8, end_channels=args.nhid * 16, **model_kwargs)
+    model = GWNet.from_args(args, device, supports, aptinit, **model_kwargs)
     model.to(device)
     engine = Trainer(model, scaler, args.learning_rate, args.weight_decay)
     print("start training...", flush=True)
