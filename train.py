@@ -16,19 +16,9 @@ from exp_results import summary
 
 def main(args, **model_kwargs):
     device = torch.device(args.device)
-    dataloader = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size,
-                                   n_obs=args.n_obs)
-    scaler = dataloader['scaler']
-    sensor_ids, sensor_id_to_ind, adj_mx = util.load_adj(args.adjdata, args.adjtype)
-    supports = [torch.tensor(i).to(device) for i in adj_mx]
-    if args.randomadj:
-        aptinit = None
-    else:
-        aptinit = supports[0]  # ignored without do_graph_conv and add_apt_adj
-
-    if args.aptonly:
-        if not args.addaptadj and args.do_graph_conv: raise ValueError('WARNING: not using adjacency matrix')
-        supports = None
+    data = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size, n_obs=args.n_obs)
+    scaler = data['scaler']
+    aptinit, supports = util.make_graph_inputs(args, device)
 
     model = GWNet.from_args(args, device, supports, aptinit, **model_kwargs)
     model.to(device)
@@ -40,8 +30,8 @@ def main(args, **model_kwargs):
     mb = progress_bar(list(range(1, args.epochs + 1)))
     for _ in mb:
         train_loss, train_mape, train_rmse = [], [], []
-        dataloader['train_loader'].shuffle()
-        for iter, (x, y) in enumerate(dataloader['train_loader'].get_iterator()):
+        data['train_loader'].shuffle()
+        for iter, (x, y) in enumerate(data['train_loader'].get_iterator()):
             trainx = torch.Tensor(x).to(device).transpose(1, 3)
             trainy = torch.Tensor(y).to(device).transpose(1, 3)
             mae, mape, rmse = engine.train(trainx, trainy[:, 0, :, :])
@@ -51,7 +41,7 @@ def main(args, **model_kwargs):
             if args.n_iters is not None and iter >= args.n_iters:
                 break
         engine.scheduler.step()
-        _, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device, engine)
+        _, valid_loss, valid_mape, valid_rmse = eval_(data['val_loader'], device, engine)
 
         m = dict(train_loss=np.mean(train_loss), train_mape=np.mean(train_mape),
                  train_rmse=np.mean(train_rmse), valid_loss=np.mean(valid_loss),
@@ -66,11 +56,10 @@ def main(args, **model_kwargs):
         met_df.round(6).to_csv(f'{args.save}/metrics.csv')
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
-    realy = torch.Tensor(dataloader['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
-    test_met_df, yhat = calc_test_metrics(engine.model, device, dataloader['test_loader'], scaler, realy)
+    realy = torch.Tensor(data['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
+    test_met_df, yhat = calc_test_metrics(engine.model, device, data['test_loader'], scaler, realy)
     test_met_df.round(6).to_csv(os.path.join(args.save, 'test_metrics.csv'))
     print(summary(args.save))
-
 
 def eval_(ds, device, engine):
     """Run validation."""

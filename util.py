@@ -218,6 +218,17 @@ def make_pred_df(realy, yhat, scaler):
     return df
 
 
+def make_graph_inputs(args, device):
+    sensor_ids, sensor_id_to_ind, adj_mx = load_adj(args.adjdata, args.adjtype)
+    supports = [torch.tensor(i).to(device) for i in adj_mx]
+    aptinit = None if args.randomadj else supports[0]  # ignored without do_graph_conv and add_apt_adj
+    if args.aptonly:
+        if not args.addaptadj and args.do_graph_conv: raise ValueError(
+            'WARNING: not using adjacency matrix')
+        supports = None
+    return aptinit, supports
+
+
 def get_shared_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', type=str, default='cuda:0', help='')

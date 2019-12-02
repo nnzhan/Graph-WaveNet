@@ -6,17 +6,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def main(args, **model_kwargs):
+def main(args, save_pred_path='preds.csv', save_metrics_path='last_test_metrics.csv', **model_kwargs):
     device = torch.device(args.device)
-    _, _, adj_mx = util.load_adj(args.adjdata,args.adjtype)
-    supports = [torch.tensor(i).to(device) for i in adj_mx]
-    if args.randomadj:
-        adjinit = None
-    else:
-        adjinit = supports[0]
-
-    if args.aptonly:
-        supports = None
+    adjinit, supports = util.make_graph_inputs(args, device)
     model = GWNet.from_args(args, device, supports, adjinit, **model_kwargs)
     model.to(device)
     model.load_state_dict(torch.load(args.checkpoint))
@@ -28,10 +20,8 @@ def main(args, **model_kwargs):
     realy = realy.transpose(1,3)[:,0,:,:]
     met_df, yhat = util.calc_test_metrics(model, device, dataloader['test_loader'], scaler, realy)
     df2 = util.make_pred_df(realy, yhat, scaler)
-    met_df.to_csv('last_test_metrics.csv')
-    df2.to_csv('./wave.csv', index=False)
-
-
+    met_df.to_csv(save_metrics_path)
+    df2.to_csv(save_pred_path, index=False)
     if args.plotheatmap: plot_learned_adj_matrix(model)
     return met_df, df2
 
