@@ -11,6 +11,8 @@ from fastprogress import progress_bar
 
 from model import GWNet
 from util import calc_test_metrics
+from exp_results import summary
+
 
 
 def main(args, **model_kwargs):
@@ -33,29 +35,22 @@ def main(args, **model_kwargs):
     model.to(device)
     engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, args.lr_decay_rate)
     print("start training...", flush=True)
-    metrics, train_time = [], []
+    metrics = []
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
-    lowest_mae_yet = 100  # high value in MPH will get overwritten
+    lowest_mae_yet = 100  # high value, will get overwritten
     mb = progress_bar(list(range(1, args.epochs + 1)))
-    for i in mb:
-        # if i % 10 == 0:
-        # lr = max(0.000002,args.learning_rate * (0.1 ** (i // 10)))
-        # for g in engine.optimizer.param_groups: g['lr'] = lr
-        train_loss = []
-        train_mape = []
-        train_rmse = []
-        t1 = time.time()
+    for _ in mb:
+        train_loss, train_mape, train_rmse = [], [], []
         dataloader['train_loader'].shuffle()
         for iter, (x, y) in enumerate(dataloader['train_loader'].get_iterator()):
             trainx = torch.Tensor(x).to(device).transpose(1, 3)
             trainy = torch.Tensor(y).to(device).transpose(1, 3)
-            loss, mape, rmse = engine.train(trainx, trainy[:, 0, :, :])
-            train_loss.append(loss)
+            mae, mape, rmse = engine.train(trainx, trainy[:, 0, :, :])
+            train_loss.append(mae)
             train_mape.append(mape)
             train_rmse.append(rmse)
             if args.n_iters is not None and iter >= args.n_iters:
                 break
-        train_time.append(time.time() - t1)
         engine.scheduler.step()
         _, valid_loss, valid_mape, valid_rmse = eval_(dataloader['val_loader'], device, engine)
 
@@ -70,17 +65,15 @@ def main(args, **model_kwargs):
         met_df = pd.DataFrame(metrics)
         mb.comment = f'best valid_loss: {met_df.valid_loss.min(): .3f}, current valid_loss: {m.valid_loss:.3f}'
         met_df.round(6).to_csv(f'{args.save}/metrics.csv')
-    print(f"Training finished. Best Valid Loss:")
-    print(met_df.loc[met_df.valid_loss.idxmin()].round(4))
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
     realy = torch.Tensor(dataloader['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
     test_met_df, yhat = calc_test_metrics(engine.model, device, dataloader['test_loader'], scaler,
                                           realy)
     test_met_df.round(6).to_csv(os.path.join(args.save, 'test_metrics.csv'))
-    print(test_met_df.mean().round(3))
+    print(summary(args.save))
     pred_df = util.make_pred_df(realy, yhat, scaler)
-    pred_df.to_csv(os.path.join(args.save, 'preds.csv'))
+    #pred_df.to_csv(os.path.join(args.save, 'preds.csv'))
 
 
 def eval_(ds, device, engine):
