@@ -63,15 +63,13 @@ def main(args, **model_kwargs):
                  train_rmse=np.mean(train_rmse), valid_loss=np.mean(valid_loss),
                  valid_mape=np.mean(valid_mape), valid_rmse=np.mean(valid_rmse))
         m = pd.Series(m)
-
         metrics.append(m)
-        print(m.round(4))
         if m.valid_loss < lowest_mae_yet:
             torch.save(engine.model.state_dict(), best_model_save_path)
             lowest_mae_yet = m.valid_loss
         met_df = pd.DataFrame(metrics)
-        mb.comment = f'valid_loss: {met_df.valid_loss.min(): .3f}'
-        met_df.round(4).to_csv(f'{args.save}/metrics.csv')
+        mb.comment = f'best valid_loss: {met_df.valid_loss.min(): .3f}, current valid_loss: {m.valid_loss:.3f}'
+        met_df.round(6).to_csv(f'{args.save}/metrics.csv')
     print(f"Training finished. Best Valid Loss:")
     print(met_df.loc[met_df.valid_loss.idxmin()].round(4))
     # Metrics on test data
