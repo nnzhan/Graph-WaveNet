@@ -5,8 +5,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from util import get_shared_arg_parser
-
 
 def main(args, **model_kwargs):
     device = torch.device(args.device)
@@ -19,13 +17,6 @@ def main(args, **model_kwargs):
 
     if args.aptonly:
         supports = None
-
-    # model = GWNet(device, args.num_nodes, args.dropout,
-    #               supports=supports, do_graph_conv=args.do_graph_conv,
-    #               addaptadj=args.addaptadj, aptinit=adjinit, apt_size=args.apt_size,
-    #
-    #
-    #               )
     model = GWNet(device, args.num_nodes, args.dropout, supports=supports,
                   do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=adjinit,
                   in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
@@ -59,7 +50,7 @@ def plot_learned_adj_matrix(model):
 
 
 if __name__ == "__main__":
-    parser = get_shared_arg_parser()
+    parser = util.get_shared_arg_parser()
     parser.add_argument('--checkpoint', type=str, help='')
     parser.add_argument('--plotheatmap', action='store_true')
 
