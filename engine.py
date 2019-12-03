@@ -13,6 +13,7 @@ class Trainer():
         self.scheduler = optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=l1)
         if self.fp16:
             from apex import amp  # Apex is only required if we use fp16 training
+            amp.register_half_function(torch, 'einsum')
             self.model, self.optimizer = amp.initialize(self.model, self.optimizer,
                                                             opt_level=self.fp16)
 
