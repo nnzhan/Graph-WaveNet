@@ -27,6 +27,7 @@ def main(args, **model_kwargs):
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
     lowest_mae_yet = 100  # high value, will get overwritten
     mb = progress_bar(list(range(1, args.epochs + 1)))
+    since_best = 0
     for _ in mb:
         train_loss, train_mape, train_rmse = [], [], []
         data['train_loader'].shuffle()
@@ -50,9 +51,13 @@ def main(args, **model_kwargs):
         if m.valid_loss < lowest_mae_yet:
             torch.save(engine.model.state_dict(), best_model_save_path)
             lowest_mae_yet = m.valid_loss
+            since_best = 0
+        else:
+            since_best += 1
         met_df = pd.DataFrame(metrics)
         mb.comment = f'best valid_loss: {met_df.valid_loss.min(): .3f}, current valid_loss: {m.valid_loss:.3f}'
         met_df.round(6).to_csv(f'{args.save}/metrics.csv')
+        if since_best >= args.es_patience: break  #
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
     realy = torch.Tensor(data['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
@@ -88,6 +93,7 @@ if __name__ == "__main__":
                         help="Set to O0, O1, O2 or O3 for fp16 training (see apex documentation)")
     parser.add_argument('--save', type=str, default='experiment', help='save path')
     parser.add_argument('--n_iters', default=None, help='quit after this many iterations')
+    parser.add_argument('--es_patience', type=int, default=20, help='quit if no improvement after this many iterations')
     args = parser.parse_args()
     t1 = time.time()
     if not os.path.exists(args.save):
