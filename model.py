@@ -66,7 +66,7 @@ class GWNet(nn.Module):
         self.supports_len = len(self.fixed_supports)
         if do_graph_conv and addaptadj:
             if aptinit is None:
-                nodevecs = torch.randn(num_nodes, apt_size).half(), torch.randn(apt_size, num_nodes).half()
+                nodevecs = torch.randn(num_nodes, apt_size), torch.randn(apt_size, num_nodes)
             else:
                 nodevecs = self.svd_init(apt_size, aptinit)
             self.supports_len += 1
@@ -132,7 +132,7 @@ class GWNet(nn.Module):
         adjacency_matrices = self.fixed_supports
         # calculate the current adaptive adj matrix once per iteration
         if self.addaptadj:
-            adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)) / self.softmax_temp, dim=1)
+            adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)) / self.softmax_temp, dim=1).half()
             adjacency_matrices = self.fixed_supports + [adp]
 
         # WaveNet layers
