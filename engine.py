@@ -30,7 +30,7 @@ class Trainer():
 
         predict = self.scaler.inverse_transform(output)
         real = torch.unsqueeze(real_val, dim=1)
-        mae, mape, rmse = util.cheaper_metric(predict, real, null_val=0.0)
+        mae, mape, rmse = util.calc_metrics(predict, real, null_val=0.0)
 
         if self.fp16:
             from apex import amp
@@ -51,5 +51,5 @@ class Trainer():
         real = torch.unsqueeze(real_val,dim=1)
         predict = self.scaler.inverse_transform(output)
         predict = torch.clamp(predict, min=0., max=70.)
-        mae, mape, rmse = [x.item() for x in util.cheaper_metric(predict, real, null_val=0.0)]
+        mae, mape, rmse = [x.item() for x in util.calc_metrics(predict, real, null_val=0.0)]
         return mae, mape, rmse

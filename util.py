@@ -167,7 +167,7 @@ def load_dataset(dataset_dir, batch_size, valid_batch_size= None, test_batch_siz
     return data
 
 
-def cheaper_metric(preds, labels, null_val=0.):
+def calc_metrics(preds, labels, null_val=0.):
     if np.isnan(null_val):
         mask = ~torch.isnan(labels)
     else:
@@ -188,9 +188,9 @@ def mask_and_fillna(loss, mask):
     loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
     return torch.mean(loss)
 
-def calc_test_metrics(model, device, test_loader, scaler, realy):
+def calc_test_metrics(model, device, test_loader, scaler, realy) -> pd.DataFrame:
     outputs = []
-    for iter, (x, y) in enumerate(test_loader.get_iterator()):
+    for _, (x, y) in enumerate(test_loader.get_iterator()):
         testx = torch.Tensor(x).to(device).transpose(1, 3)
         with torch.no_grad():
             preds = model(testx).transpose(1, 3)
@@ -201,7 +201,7 @@ def calc_test_metrics(model, device, test_loader, scaler, realy):
         pred = scaler.inverse_transform(yhat[:, :, i])
         pred = torch.clamp(pred, min=0., max=70.)
         real = realy[:, :, i]
-        test_met.append([x.item() for x in cheaper_metric(pred, real)])
+        test_met.append([x.item() for x in calc_metrics(pred, real)])
     test_met_df = pd.DataFrame(test_met, columns=['mae', 'mape', 'rmse']).rename_axis('t')
     return test_met_df, yhat
 
