@@ -22,7 +22,7 @@ def main(args, **model_kwargs):
 
     model = GWNet.from_args(args, device, supports, aptinit, **model_kwargs)
     model.to(device)
-    engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, args.lr_decay_rate)
+    engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, args.lr_decay_rate, args.fp16)
     print("start training...", flush=True)
     metrics = []
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
@@ -84,7 +84,8 @@ if __name__ == "__main__":
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay rate')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='learning rate')
     parser.add_argument('--lr_decay_rate', type=float, default=0.97, help='learning rate')
-
+    parser.add_argument("--fp16", type=str, default="",
+                        help="Set to O0, O1, O2 or O3 for fp16 training (see apex documentation)")
     parser.add_argument('--save', type=str, default='experiment', help='save path')
     parser.add_argument('--n_iters', default=None, help='quit after this many iterations')
     args = parser.parse_args()

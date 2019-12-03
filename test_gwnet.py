@@ -32,6 +32,7 @@ class TestTrain(unittest.TestCase):
 
     def test_1_epoch(self):
         args = modify_args(pickle_load(TRAIN_ARGS), ARG_UPDATES)
+        args.fp16 = 'O1'
         main(args)
         df = pd.read_csv(f'{args.save}/metrics.csv', index_col=0)
         self.assertEqual(df.shape, (args.epochs, 6))
