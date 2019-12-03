@@ -66,7 +66,7 @@ class GWNet(nn.Module):
         self.supports_len = len(self.fixed_supports)
         if do_graph_conv and addaptadj:
             if aptinit is None:
-                nodevecs = torch.randn(num_nodes, apt_size), torch.randn(apt_size, num_nodes)
+                nodevecs = torch.randn(num_nodes, apt_size).half(), torch.randn(apt_size, num_nodes).half()
             else:
                 nodevecs = self.svd_init(apt_size, aptinit)
             self.supports_len += 1
