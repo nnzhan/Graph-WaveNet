@@ -38,6 +38,5 @@ if __name__ == "__main__":
     parser = util.get_shared_arg_parser()
     parser.add_argument('--checkpoint', type=str, help='')
     parser.add_argument('--plotheatmap', action='store_true')
-
     args = parser.parse_args()
     main(args)

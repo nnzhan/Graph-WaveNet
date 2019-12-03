@@ -35,7 +35,7 @@ class GraphConvNet(nn.Module):
 class GWNet(nn.Module):
     def __init__(self, device, num_nodes, dropout=0.3, supports=None, do_graph_conv=True,
                  softmax_temp=1., addaptadj=True, aptinit=None, in_dim=2, out_dim=12,
-                 residual_channels=32, dilation_channels=32,
+                 residual_channels=32, dilation_channels=32, cat_feat_gc=False,
                  skip_channels=256, end_channels=512, kernel_size=2, blocks=4, layers=2,
                  apt_size=10):
         super().__init__()
@@ -44,11 +44,22 @@ class GWNet(nn.Module):
         self.blocks = blocks
         self.layers = layers
         self.do_graph_conv = do_graph_conv
+        self.cat_feat_gc = cat_feat_gc
         self.addaptadj = addaptadj
 
-        self.start_conv = nn.Conv2d(in_channels=in_dim,
-                                    out_channels=residual_channels,
-                                    kernel_size=(1,1))
+
+        if self.cat_feat_gc:
+            self.start_conv = nn.Conv2d(in_channels=1,  # hard code to avoid errors
+                                        out_channels=residual_channels,
+                                        kernel_size=(1, 1))
+            self.cat_feature_conv = nn.Conv2d(in_channels=1,
+                                              out_channels=residual_channels,
+                                              kernel_size=(1, 1))
+        else:
+            self.start_conv = nn.Conv2d(in_channels=in_dim,
+                                        out_channels=residual_channels,
+                                        kernel_size=(1, 1))
+
         self.fixed_supports = supports or []
         receptive_field = 1
 
@@ -101,14 +112,22 @@ class GWNet(nn.Module):
                     in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
                     softmax_temp=args.softmax_temp,
                     residual_channels=args.nhid, dilation_channels=args.nhid,
-                    skip_channels=args.nhid * 8, end_channels=args.nhid * 16, **kwargs)
+                    skip_channels=args.nhid * 8, end_channels=args.nhid * 16,
+                    cat_feat_gc=args.cat_feat_gc, **kwargs)
         return model
 
-    def forward(self, input):
+    def forward(self, x):
         # Input shape is (bs, features, n_nodes, n_timesteps)
-        if input.size(3) < self.receptive_field:
-            input = nn.functional.pad(input, (self.receptive_field - input.size(3), 0, 0, 0))
-        x = self.start_conv(input)
+        in_len = x.size(3)
+        if in_len < self.receptive_field:
+            x = nn.functional.pad(x, (self.receptive_field - in_len, 0, 0, 0))
+        if self.cat_feat_gc:
+            f1, f2 = x[:,[0]], x[:,[1]]
+            x1 = self.start_conv(f1)
+            x2 = F.leaky_relu(self.cat_feature_conv(f2))
+            x = x1 + x2
+        else:
+            x = self.start_conv(x)
         skip = 0
         adjacency_matrices = self.fixed_supports
         # calculate the current adaptive adj matrix once per iteration
@@ -123,7 +142,7 @@ class GWNet(nn.Module):
             #            |----------------------------------------|     *residual*
             #            |                                        |
             #            |   |-dil_conv -- tanh --|                |
-            #         ---|                  * ----|-- 1x1 -- + -->	*input*
+            #         ---|                  * ----|-- 1x1 -- + -->	*x_in*
             #                |-dil_conv -- sigm --|    |
             #                                         1x1
             #                                          |
@@ -144,15 +163,16 @@ class GWNet(nn.Module):
                 break
 
             if self.do_graph_conv:
-                x = self.graph_convs[i](x, adjacency_matrices)
+                graph_out = self.graph_convs[i](x, adjacency_matrices)
+                x = x + graph_out if self.cat_feat_gc else graph_out
             else:
                 x = self.residual_convs[i](x)
-            x = x + residual[:, :, :, -x.size(3):] # TODO(SS): Mean/Max Pool?
+            x = x + residual[:, :, :, -x.size(3):]  # TODO(SS): Mean/Max Pool?
             x = self.bn[i](x)
 
         x = F.relu(skip)  # ignore last X?
         x = F.relu(self.end_conv_1(x))
-        x = self.end_conv_2(x)
+        x = self.end_conv_2(x)  # downsample to (bs, 12, 207, nfeatures)
         return x
 
 

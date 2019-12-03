@@ -13,7 +13,8 @@ TEST_ARGS = 'test_script_args.pkl'
 SAVE_DIR = 'utest_experiment/'
 ARG_UPDATES = {'epochs': 1, 'n_iters': 1, 'batch_size': 2, 'n_obs': 2,
                'device': util.DEFAULT_DEVICE, 'save': SAVE_DIR, 'addaptadj': True,
-               'apt_size': 2, 'nhid': 1, 'softmax_temp': 1., 'lr_decay_rate': 1.}
+               'apt_size': 2, 'nhid': 1, 'softmax_temp': 1., 'lr_decay_rate': 1.,
+               'in_dim': 1, 'cat_feat_gc': True}
 
 
 def modify_args(args, updates):
@@ -42,7 +43,5 @@ class TestTrain(unittest.TestCase):
         self.assertTrue('nodevec1' in state_dict)
         self.assertTrue(os.path.exists(test_args.checkpoint))
         new_met, new_preds = test.main(test_args)
-        #import ipdb; ipdb.set_trace()
-        #new_met = pd.read_csv('last_test_metrics.csv', index_col=0)
         deltas = test_df.mean() - new_met.mean()
         self.assertGreaterEqual(.01, deltas.abs().max())
