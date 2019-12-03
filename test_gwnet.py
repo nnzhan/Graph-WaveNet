@@ -14,7 +14,7 @@ SAVE_DIR = 'utest_experiment/'
 ARG_UPDATES = {'epochs': 1, 'n_iters': 1, 'batch_size': 2, 'n_obs': 2,
                'device': util.DEFAULT_DEVICE, 'save': SAVE_DIR, 'addaptadj': True,
                'apt_size': 2, 'nhid': 1, 'softmax_temp': 1., 'lr_decay_rate': 1.,
-               'in_dim': 1, 'cat_feat_gc': True}
+               'in_dim': 1, 'cat_feat_gc': True, 'clip': 1}
 
 
 def modify_args(args, updates):

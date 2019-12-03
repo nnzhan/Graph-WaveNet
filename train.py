@@ -22,7 +22,7 @@ def main(args, **model_kwargs):
 
     model = GWNet.from_args(args, device, supports, aptinit, **model_kwargs)
     model.to(device)
-    engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, lr_decay_rate=args.lr_decay_rate, fp16=args.fp16)
+    engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, clip=args.clip, lr_decay_rate=args.lr_decay_rate, fp16=args.fp16)
     metrics = []
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
     lowest_mae_yet = 100  # high value, will get overwritten
@@ -80,6 +80,7 @@ def eval_(ds, device, engine):
 if __name__ == "__main__":
     parser = util.get_shared_arg_parser()
     parser.add_argument('--epochs', type=int, default=100, help='')
+    parser.add_argument('--clip', type=int, default=5, help='Gradient Clipping')
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay rate')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='learning rate')
     parser.add_argument('--lr_decay_rate', type=float, default=0.97, help='learning rate')
