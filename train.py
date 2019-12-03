@@ -22,8 +22,7 @@ def main(args, **model_kwargs):
 
     model = GWNet.from_args(args, device, supports, aptinit, **model_kwargs)
     model.to(device)
-    engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, args.lr_decay_rate, args.fp16)
-    print("start training...", flush=True)
+    engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, lr_decay_rate=args.lr_decay_rate, fp16=args.fp16)
     metrics = []
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
     lowest_mae_yet = 100  # high value, will get overwritten
