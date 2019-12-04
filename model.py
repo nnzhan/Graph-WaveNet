@@ -125,8 +125,9 @@ class GWNet(nn.Module):
         grpa = [v for k, v in self.named_parameters() if k not in [bk, wk]]
         return grpa, grpb
 
-
-
+    def freeze_group_b(self):
+        for param in self.conv_group[1]:
+            param.requires_grad = False
 
     def forward(self, x):
         # Input shape is (bs, features, n_nodes, n_timesteps)

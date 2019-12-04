@@ -25,7 +25,6 @@ class Trainer():
             amp.register_half_function(torch, 'einsum')
             self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level=self.fp16)
 
-
     @classmethod
     def from_args(cls, model, scaler, args):
         end_conv_lr = getattr(args, 'end_conv_lr', None)
