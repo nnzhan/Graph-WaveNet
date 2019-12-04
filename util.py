@@ -188,13 +188,14 @@ def mask_and_fillna(loss, mask):
     loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
     return torch.mean(loss)
 
+
 def calc_test_metrics(model, device, test_loader, scaler, realy, seq_length) -> pd.DataFrame:
     outputs = []
     for _, (x, y) in enumerate(test_loader.get_iterator()):
         testx = torch.Tensor(x).to(device).transpose(1, 3)
         with torch.no_grad():
             preds = model(testx).transpose(1, 3)
-        outputs.append(preds.squeeze())
+        outputs.append(preds.squeeze(1))
     yhat = torch.cat(outputs, dim=0)[:realy.size(0), ...]
     test_met = []
 
