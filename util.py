@@ -194,7 +194,7 @@ def calc_test_metrics(model, device, test_loader, scaler, realy, seq_length) -> 
         testx = torch.Tensor(x).to(device).transpose(1, 3)
         with torch.no_grad():
             preds = model(testx).transpose(1, 3)
-        outputs.append(preds.squeeze())
+        outputs.append(preds.squeeze(1))
     yhat = torch.cat(outputs, dim=0)[:realy.size(0), ...]
     test_met = []
 
@@ -253,6 +253,7 @@ def get_shared_arg_parser():
     parser.add_argument('--apt_size', default=10, type=int)
     parser.add_argument('--softmax_temp', default=1., type=float)
     parser.add_argument('--cat_feat_gc', action='store_true')
+    parser.add_argument('--checkpoint', type=str, help='')
     return parser
 
 
