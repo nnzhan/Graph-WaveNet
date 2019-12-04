@@ -7,9 +7,10 @@ class Trainer():
         self.model = model
         if end_conv_lr:
             end_conv2, other_params = model.conv_group
-            self.optimizer = optim.Adam([{'params': end_conv2, 'lr': end_conv_lr},
-                                         {'params': other_params}]
-                                        , lr=lrate, weight_decay=wdecay)
+            groups = [{'params': end_conv2, 'lr': end_conv_lr}]
+            if lrate > 0:
+                groups.append({'params': other_params})
+            self.optimizer = optim.Adam(groups, lr=lrate, weight_decay=wdecay)
         else:
             self.optimizer = optim.Adam(self.model.parameters(), lr=lrate, weight_decay=wdecay)
         self.scaler = scaler
