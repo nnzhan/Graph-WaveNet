@@ -254,6 +254,7 @@ def get_shared_arg_parser():
     parser.add_argument('--apt_size', default=10, type=int)
     parser.add_argument('--softmax_temp', default=1., type=float)
     parser.add_argument('--cat_feat_gc', action='store_true')
+    parser.add_argument('--checkpoint', type=str, help='')
     return parser
 
 

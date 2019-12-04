@@ -12,6 +12,19 @@ from model import GWNet
 from util import calc_test_metrics
 from exp_results import summary
 
+bk, wk = ['end_conv_2.bias', 'end_conv_2.weight']
+
+
+def surgery(model, surg_checkpoint):
+    state_dict = torch.load(surg_checkpoint)
+    b,w = state_dict.pop(bk), state_dict.pop(wk)
+    model.load_state_dict(state_dict, strict=False)
+    cur_state_dict = model.state_dict()
+    cur_state_dict[bk][:b.shape[0]] = b
+    cur_state_dict[wk][:w.shape[0]] = w
+    model.load_state_dict(cur_state_dict)
+    return model
+
 
 
 def main(args, **model_kwargs):
@@ -21,6 +34,8 @@ def main(args, **model_kwargs):
     aptinit, supports = util.make_graph_inputs(args, device)
 
     model = GWNet.from_args(args, device, supports, aptinit, **model_kwargs)
+    if args.checkpoint:
+        model = surgery(model, args.checkpoint)
     model.to(device)
     engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, clip=args.clip, lr_decay_rate=args.lr_decay_rate, fp16=args.fp16)
     metrics = []
