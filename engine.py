@@ -3,9 +3,15 @@ from model import *
 import util
 
 class Trainer():
-    def __init__(self, model, scaler, lrate, wdecay, clip=5, lr_decay_rate=.97, fp16=''):
+    def __init__(self, model: GWNet, scaler, lrate, wdecay, clip=5, lr_decay_rate=.97, fp16='', end_conv_lr=None):
         self.model = model
-        self.optimizer = optim.Adam(self.model.parameters(), lr=lrate, weight_decay=wdecay)
+        if end_conv_lr:
+            end_conv2, other_params = model.conv_group
+            self.optimizer = optim.Adam([{'params': end_conv2, 'lr': end_conv_lr},
+                                         {'params': other_params}]
+                                        , lr=lrate, weight_decay=wdecay)
+        else:
+            self.optimizer = optim.Adam(self.model.parameters(), lr=lrate, weight_decay=wdecay)
         self.scaler = scaler
         self.clip = clip
         self.fp16 = fp16
@@ -17,17 +23,20 @@ class Trainer():
             except ImportError:
                 raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
             amp.register_half_function(torch, 'einsum')
-            self.model, self.optimizer = amp.initialize(self.model, self.optimizer,
-                                                            opt_level=self.fp16)
+            self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level=self.fp16)
+
+
+    @classmethod
+    def from_args(cls, model, scaler, args):
+        end_conv_lr = getattr(args, 'end_conv_lr', None)
+        return cls(model, scaler, args.learning_rate, args.weight_decay, clip=args.clip,
+                   lr_decay_rate=args.lr_decay_rate, fp16=args.fp16, end_conv_lr=end_conv_lr)
 
     def train(self, input, real_val):
         self.model.train()
         self.optimizer.zero_grad()
         input = nn.functional.pad(input,(1,0,0,0))
         output = self.model(input).transpose(1,3)  # now, output = [batch_size,1,num_nodes,seq_length]
-
-        #torch.clamp(output, 0, 70)
-
         predict = self.scaler.inverse_transform(output)
         real = torch.unsqueeze(real_val, dim=1)
         mae, mape, rmse = util.calc_metrics(predict, real, null_val=0.0)

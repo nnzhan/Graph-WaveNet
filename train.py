@@ -37,7 +37,7 @@ def main(args, **model_kwargs):
     if args.checkpoint:
         model = surgery(model, args.checkpoint)
     model.to(device)
-    engine = Trainer(model, scaler, args.learning_rate, args.weight_decay, clip=args.clip, lr_decay_rate=args.lr_decay_rate, fp16=args.fp16)
+    engine = Trainer.from_args(model, scaler, args)
     metrics = []
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
     lowest_mae_yet = 100  # high value, will get overwritten
@@ -109,6 +109,8 @@ if __name__ == "__main__":
     parser.add_argument('--save', type=str, default='experiment', help='save path')
     parser.add_argument('--n_iters', default=None, help='quit after this many iterations')
     parser.add_argument('--es_patience', type=int, default=20, help='quit if no improvement after this many iterations')
+    parser.add_argument('--end_conv_lr', type=float, default=None)
+
     args = parser.parse_args()
     t1 = time.time()
     if not os.path.exists(args.save):

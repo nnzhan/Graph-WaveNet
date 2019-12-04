@@ -118,6 +118,16 @@ class GWNet(nn.Module):
         model = cls(device, args.num_nodes, **defaults)
         return model
 
+    @property
+    def conv_group(self):
+        bk, wk = ['end_conv_2.bias', 'end_conv_2.weight']
+        grpb = [v for k, v in self.named_parameters() if k in [bk, wk]]
+        grpa = [v for k, v in self.named_parameters() if k not in [bk, wk]]
+        return grpa, grpb
+
+
+
+
     def forward(self, x):
         # Input shape is (bs, features, n_nodes, n_timesteps)
         in_len = x.size(3)
