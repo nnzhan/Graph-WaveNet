@@ -194,7 +194,7 @@ def calc_test_metrics(model, device, test_loader, scaler, realy, seq_length) -> 
         testx = torch.Tensor(x).to(device).transpose(1, 3)
         with torch.no_grad():
             preds = model(testx).transpose(1, 3)
-        outputs.append(preds.squeeze(1))
+        outputs.append(preds.squeeze())
     yhat = torch.cat(outputs, dim=0)[:realy.size(0), ...]
     test_met = []
 
