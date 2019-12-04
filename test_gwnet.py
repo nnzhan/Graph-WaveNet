@@ -16,7 +16,7 @@ ARG_UPDATES = {'epochs': 1, 'n_iters': 1, 'batch_size': 2, 'n_obs': 2,
                'apt_size': 2, 'nhid': 1, 'softmax_temp': 1., 'lr_decay_rate': 1.,
                'in_dim': 1, 'cat_feat_gc': True, 'clip': 1, 'es_patience': 10}
 
-
+MODEL_KWARGS = {'end_channels': 4, 'skip_channels': 2}
 def modify_args(args, updates):
     for k,v in updates.items():
         setattr(args, k, v)
@@ -33,7 +33,7 @@ class TestTrain(unittest.TestCase):
     def test_1_epoch(self):
         args = modify_args(pickle_load(TRAIN_ARGS), ARG_UPDATES)
         args.fp16 = ''
-        main(args)
+        engine = main(args, **MODEL_KWARGS)
         df = pd.read_csv(f'{args.save}/metrics.csv', index_col=0)
         self.assertEqual(df.shape, (args.epochs, 6))
         test_df = pd.read_csv(f'{args.save}/test_metrics.csv', index_col=0)
@@ -43,6 +43,6 @@ class TestTrain(unittest.TestCase):
         state_dict = torch.load(test_args.checkpoint)
         self.assertTrue('nodevec1' in state_dict)
         self.assertTrue(os.path.exists(test_args.checkpoint))
-        new_met, new_preds = test.main(test_args)
+        new_met, new_preds = test.main(test_args, **MODEL_KWARGS)
         deltas = test_df.mean() - new_met.mean()
         self.assertGreaterEqual(.01, deltas.abs().max())

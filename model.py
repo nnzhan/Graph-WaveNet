@@ -107,13 +107,15 @@ class GWNet(nn.Module):
 
     @classmethod
     def from_args(cls, args, device, supports, aptinit, **kwargs):
-        model = cls(device, args.num_nodes, dropout=args.dropout, supports=supports,
+        defaults =  dict(dropout=args.dropout, supports=supports,
                     do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=aptinit,
                     in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
                     softmax_temp=args.softmax_temp,
                     residual_channels=args.nhid, dilation_channels=args.nhid,
                     skip_channels=args.nhid * 8, end_channels=args.nhid * 16,
-                    cat_feat_gc=args.cat_feat_gc, **kwargs)
+                    cat_feat_gc=args.cat_feat_gc)
+        defaults.update(**kwargs)
+        model = cls(device, args.num_nodes, **defaults)
         return model
 
     def forward(self, x):
