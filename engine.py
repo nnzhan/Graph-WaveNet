@@ -24,7 +24,7 @@ class Trainer():
         self.model.train()
         self.optimizer.zero_grad()
         input = nn.functional.pad(input,(1,0,0,0))
-        output = self.model(input).transpose(1,3)  # now, output = [batch_size,1,num_nodes,12]
+        output = self.model(input).transpose(1,3)  # now, output = [batch_size,1,num_nodes,seq_length]
 
         #torch.clamp(output, 0, 70)
 
@@ -47,7 +47,7 @@ class Trainer():
     def eval(self, input, real_val):
         self.model.eval()
         input = nn.functional.pad(input,(1,0,0,0))
-        output = self.model(input).transpose(1,3) #  [batch_size,12,num_nodes,1]
+        output = self.model(input).transpose(1,3) #  [batch_size,seq_length,num_nodes,1]
         real = torch.unsqueeze(real_val,dim=1)
         predict = self.scaler.inverse_transform(output)
         predict = torch.clamp(predict, min=0., max=70.)

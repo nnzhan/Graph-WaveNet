@@ -61,7 +61,7 @@ def main(args, **model_kwargs):
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
     realy = torch.Tensor(data['y_test']).transpose(1, 3)[:, 0, :, :].to(device)
-    test_met_df, yhat = calc_test_metrics(engine.model, device, data['test_loader'], scaler, realy)
+    test_met_df, yhat = calc_test_metrics(engine.model, device, data['test_loader'], scaler, realy, args.seq_length)
     test_met_df.round(6).to_csv(os.path.join(args.save, 'test_metrics.csv'))
     print(summary(args.save))
 

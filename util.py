@@ -188,7 +188,7 @@ def mask_and_fillna(loss, mask):
     loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
     return torch.mean(loss)
 
-def calc_test_metrics(model, device, test_loader, scaler, realy) -> pd.DataFrame:
+def calc_test_metrics(model, device, test_loader, scaler, realy, seq_length) -> pd.DataFrame:
     outputs = []
     for _, (x, y) in enumerate(test_loader.get_iterator()):
         testx = torch.Tensor(x).to(device).transpose(1, 3)
@@ -197,7 +197,8 @@ def calc_test_metrics(model, device, test_loader, scaler, realy) -> pd.DataFrame
         outputs.append(preds.squeeze())
     yhat = torch.cat(outputs, dim=0)[:realy.size(0), ...]
     test_met = []
-    for i in range(12):
+
+    for i in range(seq_length):
         pred = scaler.inverse_transform(yhat[:, :, i])
         pred = torch.clamp(pred, min=0., max=70.)
         real = realy[:, :, i]
@@ -210,11 +211,11 @@ def _to_ser(arr):
     return pd.DataFrame(arr.cpu().detach().numpy()).stack().rename_axis(['obs', 'sensor_id'])
 
 
-def make_pred_df(realy, yhat, scaler):
-    df = pd.DataFrame(dict(y12=_to_ser(realy[:, :, 11]),
-                           yhat12=_to_ser(scaler.inverse_transform(yhat[:, :, 11])),
-                           y3=_to_ser(realy[:, :, 2]),
-                           yhat3=_to_ser(scaler.inverse_transform(yhat[:, :, 2]))))
+def make_pred_df(realy, yhat, scaler, seq_length):
+    df = pd.DataFrame(dict(y_last=_to_ser(realy[:, :, seq_length - 1]),
+                           yhat_last=_to_ser(scaler.inverse_transform(yhat[:, :, seq_length - 1])),
+                           y_3=_to_ser(realy[:, :, 2]),
+                           yhat_3=_to_ser(scaler.inverse_transform(yhat[:, :, 2]))))
     return df
 
 

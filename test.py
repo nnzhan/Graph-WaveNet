@@ -18,8 +18,8 @@ def main(args, save_pred_path='preds.csv', save_metrics_path='last_test_metrics.
     scaler = dataloader['scaler']
     realy = torch.Tensor(dataloader['y_test']).to(device)
     realy = realy.transpose(1,3)[:,0,:,:]
-    met_df, yhat = util.calc_test_metrics(model, device, dataloader['test_loader'], scaler, realy)
-    df2 = util.make_pred_df(realy, yhat, scaler)
+    met_df, yhat = util.calc_test_metrics(model, device, dataloader['test_loader'], scaler, realy, args.seq_length)
+    df2 = util.make_pred_df(realy, yhat, scaler, args.seq_length)
     met_df.to_csv(save_metrics_path)
     df2.to_csv(save_pred_path, index=False)
     if args.plotheatmap: plot_learned_adj_matrix(model)

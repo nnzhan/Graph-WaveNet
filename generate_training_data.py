@@ -54,14 +54,16 @@ def generate_graph_seq2seq_io_data(
 
 
 def generate_train_val_test(args):
+    seq_length = args.seq_length
+
     df = pd.read_hdf(args.traffic_df_filename)
     # 0 is the latest observed sample.
     x_offsets = np.sort(
         # np.concatenate(([-week_size + 1, -day_size + 1], np.arange(-11, 1, 1)))
-        np.concatenate((np.arange(-11, 1, 1),))
+        np.concatenate((np.arange(-(seq_length - 1), 1, 1),))
     )
     # Predict the next one hour
-    y_offsets = np.sort(np.arange(1, 13, 1))
+    y_offsets = np.sort(np.arange(1, (seq_length + 1), 1))
     # x: (num_samples, input_length, num_nodes, input_dim)
     # y: (num_samples, output_length, num_nodes, output_dim)
     x, y = generate_graph_seq2seq_io_data(
@@ -69,7 +71,7 @@ def generate_train_val_test(args):
         x_offsets=x_offsets,
         y_offsets=y_offsets,
         add_time_in_day=True,
-        add_day_in_week=True,
+        add_day_in_week=args.dow,
     )
 
     print("x shape: ", x.shape, ", y shape: ", y.shape)
@@ -119,6 +121,18 @@ if __name__ == "__main__":
         default="data/metr-la.h5",
         help="Raw traffic readings.",
     )
+    parser.add_argument(
+        "--seq_length",
+        type=int,
+        default=12,
+        help="Sequence Length.",
+    )
+    parser.add_argument(
+        "--dow",
+        action='store_true',
+        #type=bool,
+    )
+
     args = parser.parse_args()
     if not os.path.exists(args.output_dir):
       reply = str(input(f'{args.output_dir} does not exist. Do you want to create it? (y/n)')).lower().strip()
