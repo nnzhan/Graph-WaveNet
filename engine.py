@@ -10,6 +10,7 @@ class Trainer():
             groups = [{'params': end_conv2, 'lr': end_conv_lr}]
             if lrate > 0:
                 groups.append({'params': other_params})
+            self.model.freeze_group_b()
             self.optimizer = optim.Adam(groups, lr=lrate, weight_decay=wdecay)
         else:
             self.optimizer = optim.Adam(self.model.parameters(), lr=lrate, weight_decay=wdecay)

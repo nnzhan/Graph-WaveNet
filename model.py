@@ -121,8 +121,8 @@ class GWNet(nn.Module):
     @property
     def conv_group(self):
         bk, wk = ['end_conv_2.bias', 'end_conv_2.weight']
-        grpb = [v for k, v in self.named_parameters() if k in [bk, wk]]
         grpa = [v for k, v in self.named_parameters() if k not in [bk, wk]]
+        grpb = [v for k, v in self.named_parameters() if k in [bk, wk]]
         return grpa, grpb
 
     def freeze_group_b(self):
