@@ -16,7 +16,7 @@ from exp_results import summary
 
 def main(args, **model_kwargs):
     device = torch.device(args.device)
-    data = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size, n_obs=args.n_obs)
+    data = util.load_dataset(args.data, args.batch_size, args.batch_size*2, args.batch_size*2, n_obs=args.n_obs)
     scaler = data['scaler']
     aptinit, supports = util.make_graph_inputs(args, device)
 
