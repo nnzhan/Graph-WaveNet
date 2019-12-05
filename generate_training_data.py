@@ -54,16 +54,12 @@ def generate_graph_seq2seq_io_data(
 
 
 def generate_train_val_test(args):
-    seq_length = args.seq_length
-
+    seq_length_x, seq_length_y = args.seq_length_x, args.seq_length_y
     df = pd.read_hdf(args.traffic_df_filename)
     # 0 is the latest observed sample.
-    x_offsets = np.sort(
-        # np.concatenate(([-week_size + 1, -day_size + 1], np.arange(-11, 1, 1)))
-        np.concatenate((np.arange(-(seq_length - 1), 1, 1),))
-    )
+    x_offsets = np.sort(np.concatenate((np.arange(-(seq_length_x - 1), 1, 1),)))
     # Predict the next one hour
-    y_offsets = np.sort(np.arange(1, (seq_length + 1), 1))
+    y_offsets = np.sort(np.arange(1, (seq_length_y + 1), 1))
     # x: (num_samples, input_length, num_nodes, input_dim)
     # y: (num_samples, output_length, num_nodes, output_dim)
     x, y = generate_graph_seq2seq_io_data(
@@ -105,10 +101,6 @@ def generate_train_val_test(args):
         )
 
 
-def main(args):
-    print("Generating training data")
-    generate_train_val_test(args)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -122,7 +114,13 @@ if __name__ == "__main__":
         help="Raw traffic readings.",
     )
     parser.add_argument(
-        "--seq_length",
+        "--seq_length_x",
+        type=int,
+        default=12,
+        help="Sequence Length.",
+    )
+    parser.add_argument(
+        "--seq_length_y",
         type=int,
         default=12,
         help="Sequence Length.",
@@ -134,10 +132,9 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    if not os.path.exists(args.output_dir):
-      reply = str(input(f'{args.output_dir} does not exist. Do you want to create it? (y/n)')).lower().strip()
-      if reply[0] == 'y':
-        os.mkdir(args.output_dir)
-      else:
-        exit
-    main(args)
+    if os.path.exists(args.output_dir):
+      reply = str(input(f'{args.output_dir} exists. Do you want to overwrite it? (y/n)')).lower().strip()
+      if reply[0] == 'n': exit
+    else:
+        os.makedirs(args.output_dir)
+    generate_train_val_test(args)
