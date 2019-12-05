@@ -59,7 +59,7 @@ def generate_train_val_test(args):
     # 0 is the latest observed sample.
     x_offsets = np.sort(np.concatenate((np.arange(-(seq_length_x - 1), 1, 1),)))
     # Predict the next one hour
-    y_offsets = np.sort(np.arange(1, (seq_length_y + 1), 1))
+    y_offsets = np.sort(np.arange(args.y_start, (seq_length_y + 1), 1))
     # x: (num_samples, input_length, num_nodes, input_dim)
     # y: (num_samples, output_length, num_nodes, output_dim)
     x, y = generate_graph_seq2seq_io_data(
@@ -119,17 +119,9 @@ if __name__ == "__main__":
         default=12,
         help="Sequence Length.",
     )
-    parser.add_argument(
-        "--seq_length_y",
-        type=int,
-        default=12,
-        help="Sequence Length.",
-    )
-    parser.add_argument(
-        "--dow",
-        action='store_true',
-        #type=bool,
-    )
+    parser.add_argument("--seq_length_y", type=int, default=12, help="Sequence Length.",)
+    parser.add_argument("--y_start", type=int, default=1, help="Y pred start", )
+    parser.add_argument("--dow", action='store_true',)
 
     args = parser.parse_args()
     if os.path.exists(args.output_dir):
