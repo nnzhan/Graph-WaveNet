@@ -70,7 +70,7 @@ def main(args, **model_kwargs):
         else:
             since_best += 1
         met_df = pd.DataFrame(metrics)
-        mb.comment = f'best valid_loss: {met_df.valid_loss.min(): .3f}, current valid_loss: {m.valid_loss:.3f}'
+        mb.comment = f'best val_loss: {met_df.valid_loss.min(): .3f}, current val_loss: {m.valid_loss:.3f}, current train loss: {m.train_loss: .3f}'
         met_df.round(6).to_csv(f'{args.save}/metrics.csv')
         if since_best >= args.es_patience: break  #
     # Metrics on test data
