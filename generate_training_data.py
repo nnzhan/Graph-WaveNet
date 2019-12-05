@@ -33,9 +33,9 @@ def generate_graph_seq2seq_io_data(
         time_in_day = np.tile(time_ind, [1, num_nodes, 1]).transpose((2, 1, 0))
         feature_list.append(time_in_day)
     if add_day_in_week:
-        day_in_week = np.zeros(shape=(num_samples, num_nodes, 7))
-        day_in_week[np.arange(num_samples), :, df.index.dayofweek] = 1
-        feature_list.append(day_in_week)
+        dow = df.index.dayofweek
+        dow_tiled = np.tile(dow, [1, num_nodes, 1]).transpose((2, 1, 0))
+        feature_list.append(dow_tiled)
 
     data = np.concatenate(feature_list, axis=-1)
     x, y = [], []
@@ -83,13 +83,12 @@ def generate_train_val_test(args):
         _x, _y = locals()["x_" + cat], locals()["y_" + cat]
         print(cat, "x: ", _x.shape, "y:", _y.shape)
         np.savez_compressed(
-            os.path.join(args.output_dir, f"cat.npz"),
+            os.path.join(args.output_dir, f"{cat}.npz"),
             x=_x,
             y=_y,
             x_offsets=x_offsets.reshape(list(x_offsets.shape) + [1]),
             y_offsets=y_offsets.reshape(list(y_offsets.shape) + [1]),
         )
-
 
 
 if __name__ == "__main__":
