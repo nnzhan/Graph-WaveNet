@@ -28,6 +28,7 @@ def surgery(model, surg_checkpoint):
 
 
 def main(args, **model_kwargs):
+    log_test = getattr(args, 'log_test', False)
     device = torch.device(args.device)
     data = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size, n_obs=args.n_obs)
     scaler = data['scaler']
@@ -57,10 +58,15 @@ def main(args, **model_kwargs):
                 break
         engine.scheduler.step()
         _, valid_loss, valid_mape, valid_rmse = eval_(data['val_loader'], device, engine)
-
         m = dict(train_loss=np.mean(train_loss), train_mape=np.mean(train_mape),
                  train_rmse=np.mean(train_rmse), valid_loss=np.mean(valid_loss),
                  valid_mape=np.mean(valid_mape), valid_rmse=np.mean(valid_rmse))
+        if log_test:
+            _, test_loss, test_mape, test_rmse = eval_(data['test_loader'], device, engine)
+            mn = np.mean
+            test_m = dict(test_loss=mn(test_loss), test_mape=mn(test_mape), test_rmse=mn(test_rmse))
+            m.update(test_m)
+
         m = pd.Series(m)
         metrics.append(m)
         if m.valid_loss < lowest_mae_yet:
