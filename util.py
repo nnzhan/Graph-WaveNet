@@ -51,16 +51,17 @@ class DataLoader(object):
 
         return _wrapper()
 
+
 class StandardScaler():
-    """
-    Standard the input
-    """
 
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
+        self.fill_val = 58.435
 
     def transform(self, data):
+        mask = (data == 0)
+        data[mask] = self.fill_val
         return (data - self.mean) / self.std
 
     def inverse_transform(self, data):
