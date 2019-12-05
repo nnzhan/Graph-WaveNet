@@ -1,4 +1,7 @@
 utest_experiment/*
+heatmap.png
+last_test_metrics.csv
+preds.csv
 .ipynb_checkpoints/
 data/
 .DS_Store
