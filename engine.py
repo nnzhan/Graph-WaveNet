@@ -37,10 +37,10 @@ class Trainer():
         self.model.train()
         self.optimizer.zero_grad()
         input = nn.functional.pad(input,(1,0,0,0))
-        output = self.model(input).transpose(1,3)  # now, output = [batch_size,1,num_nodes,seq_length]
+        output = self.model(input).transpose(1,3)  # now, output = [batch_size,1,num_nodes, seq_length]
         predict = self.scaler.inverse_transform(output)
-        real = torch.unsqueeze(real_val, dim=1)
-        mae, mape, rmse = util.calc_metrics(predict, real, null_val=0.0)
+        assert predict.shape[1] == 1
+        mae, mape, rmse = util.calc_metrics(predict.squeeze(1), real_val, null_val=0.0)
 
         if self.fp16:
             from apex import amp
