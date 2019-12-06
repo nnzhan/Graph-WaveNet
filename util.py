@@ -59,7 +59,6 @@ class StandardScaler():
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
-        print(f'mean:{self.mean:.3f}, scaler: {self.std:.3f}')
 
     def transform(self, data):
         return (data - self.mean) / self.std
@@ -190,9 +189,10 @@ def mask_and_fillna(loss, mask):
     return torch.mean(loss)
 
 
-def calc_test_metrics(model, device, test_loader, scaler, realy, seq_length) -> pd.DataFrame:
+def calc_tstep_metrics(model, device, test_loader, scaler, realy, seq_length) -> pd.DataFrame:
+    model.eval()
     outputs = []
-    for _, (x, y) in enumerate(test_loader.get_iterator()):
+    for _, (x, __) in enumerate(test_loader.get_iterator()):
         testx = torch.Tensor(x).to(device).transpose(1, 3)
         with torch.no_grad():
             preds = model(testx).transpose(1, 3)
