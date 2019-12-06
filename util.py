@@ -59,7 +59,7 @@ class StandardScaler():
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
-        print(f'mean:{self.mean}, scaler: {self.std}')
+        print(f'mean:{self.mean:.3f}, scaler: {self.std:.3f}')
 
     def transform(self, data):
         return (data - self.mean) / self.std
