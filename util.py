@@ -57,7 +57,7 @@ class StandardScaler():
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
-        self.fill_val = 58.435
+        self.fill_val = 57.6
 
     def transform(self, data):
         mask = (data == 0)

@@ -50,7 +50,9 @@ def main(args, **model_kwargs):
         for iter, (x, y) in enumerate(data['train_loader'].get_iterator()):
             trainx = torch.Tensor(x).to(device).transpose(1, 3)
             trainy = torch.Tensor(y).to(device).transpose(1, 3)
-            mae, mape, rmse = engine.train(trainx, trainy[:, 0, :, :])
+            yspeed = trainy[:, 0, :, :]
+            if yspeed.max() == 0: continue
+            mae, mape, rmse = engine.train(trainx, yspeed)
             train_loss.append(mae)
             train_mape.append(mape)
             train_rmse.append(rmse)
