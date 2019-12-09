@@ -12,17 +12,25 @@ from model import GWNet
 from util import calc_tstep_metrics
 from exp_results import summary
 
-bk, wk = ['end_conv_2.bias', 'end_conv_2.weight']
 
 
-def surgery(model, surg_checkpoint):
-    state_dict = torch.load(surg_checkpoint)
+
+def load_checkpoint(model, state_dict):
+    """If ckpt_path was trained for a different sequence length.
+     It is assumed that ckpt was trained to predict a subset of timesteps."""
+    bk, wk = ['end_conv_2.bias', 'end_conv_2.weight']  # only weights that vary based on seq_length.
     b,w = state_dict.pop(bk), state_dict.pop(wk)
     model.load_state_dict(state_dict, strict=False)
     cur_state_dict = model.state_dict()
     cur_state_dict[bk][:b.shape[0]] = b
     cur_state_dict[wk][:w.shape[0]] = w
     model.load_state_dict(cur_state_dict)
+    return model
+
+def load_checkpoint_from_different_graph(model, state_dict):
+    state_dict.pop('nodevec1', None)
+    state_dict.pop('nodevec2', None)
+    model.load_state_dict(state_dict, strict=False)
     return model
 
 
@@ -36,7 +44,7 @@ def main(args, **model_kwargs):
 
     model = GWNet.from_args(args, device, supports, aptinit, **model_kwargs)
     if args.checkpoint:
-        model = surgery(model, args.checkpoint)
+        model = load_checkpoint(model, torch.load(args.checkpoint))
     model.to(device)
     engine = Trainer.from_args(model, scaler, args)
     metrics = []
