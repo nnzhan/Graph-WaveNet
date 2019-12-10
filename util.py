@@ -125,6 +125,7 @@ def load_pickle(pickle_file):
         raise
     return pickle_data
 
+ADJ_CHOICES = ['scalap', 'normlap', 'symnadj', 'transition', 'identity']
 def load_adj(pkl_filename, adjtype):
     sensor_ids, sensor_id_to_ind, adj_mx = load_pickle(pkl_filename)
     if adjtype == "scalap":
@@ -238,7 +239,7 @@ def get_shared_arg_parser():
     parser.add_argument('--data', type=str, default='data/METR-LA', help='data path')
     parser.add_argument('--adjdata', type=str, default='data/sensor_graph/adj_mx.pkl',
                         help='adj data path')
-    parser.add_argument('--adjtype', type=str, default='doubletransition', help='adj type')
+    parser.add_argument('--adjtype', type=str, default='doubletransition', help='adj type', choices=ADJ_CHOICES)
     parser.add_argument('--do_graph_conv', action='store_true',
                         help='whether to add graph convolution layer')
     parser.add_argument('--aptonly', action='store_true', help='whether only adaptive adj')
