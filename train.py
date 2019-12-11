@@ -88,16 +88,13 @@ def eval_(ds, device, engine):
 if __name__ == "__main__":
     parser = util.get_shared_arg_parser()
     parser.add_argument('--epochs', type=int, default=100, help='')
-    parser.add_argument('--clip', type=int, default=5, help='Gradient Clipping')
+    parser.add_argument('--clip', type=int, default=3, help='Gradient Clipping')
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay rate')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='learning rate')
     parser.add_argument('--lr_decay_rate', type=float, default=0.97, help='learning rate')
-    parser.add_argument("--fp16", type=str, default="",
-                        help="Set to O0, O1, O2 or O3 for fp16 training (see apex documentation)")
     parser.add_argument('--save', type=str, default='experiment', help='save path')
     parser.add_argument('--n_iters', default=None, help='quit after this many iterations')
     parser.add_argument('--es_patience', type=int, default=20, help='quit if no improvement after this many iterations')
-    parser.add_argument('--end_conv_lr', type=float, default=None)
 
     args = parser.parse_args()
     t1 = time.time()
