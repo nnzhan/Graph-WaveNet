@@ -27,9 +27,8 @@ def load_checkpoint(model, state_dict):
 
 
 def main(args, **model_kwargs):
-    log_test = getattr(args, 'log_test', False)
     device = torch.device(args.device)
-    data = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size, n_obs=args.n_obs)
+    data = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size, n_obs=args.n_obs, fill_zeroes=args.fill_zeroes)
     scaler = data['scaler']
     aptinit, supports = util.make_graph_inputs(args, device)
 
@@ -62,11 +61,6 @@ def main(args, **model_kwargs):
         m = dict(train_loss=np.mean(train_loss), train_mape=np.mean(train_mape),
                  train_rmse=np.mean(train_rmse), valid_loss=np.mean(valid_loss),
                  valid_mape=np.mean(valid_mape), valid_rmse=np.mean(valid_rmse))
-        if log_test:
-            _, test_loss, test_mape, test_rmse = eval_(data['test_loader'], device, engine)
-            mn = np.mean
-            test_m = dict(test_loss=mn(test_loss), test_mape=mn(test_mape), test_rmse=mn(test_rmse))
-            m.update(test_m)
 
         m = pd.Series(m)
         metrics.append(m)

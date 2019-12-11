@@ -54,13 +54,15 @@ class DataLoader(object):
 
 class StandardScaler():
 
-    def __init__(self, mean, std):
+    def __init__(self, mean, std, fill_zeroes=False):
         self.mean = mean
         self.std = std
+        self.fill_zeroes = fill_zeroes
 
     def transform(self, data):
-        mask = (data == 0)
-        data[mask] = self.mean
+        if self.fill_zeroes:
+            mask = (data == 0)
+            data[mask] = self.mean
         return (data - self.mean) / self.std
 
     def inverse_transform(self, data):
@@ -146,7 +148,7 @@ def load_adj(pkl_filename, adjtype):
     return sensor_ids, sensor_id_to_ind, adj
 
 
-def load_dataset(dataset_dir, batch_size, valid_batch_size= None, test_batch_size=None, n_obs=None):
+def load_dataset(dataset_dir, batch_size, valid_batch_size=None, test_batch_size=None, n_obs=None, fill_zeroes=True):
     data = {}
     for category in ['train', 'val', 'test']:
         cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
@@ -155,7 +157,7 @@ def load_dataset(dataset_dir, batch_size, valid_batch_size= None, test_batch_siz
         if n_obs is not None:
             data['x_' + category] = data['x_' + category][:n_obs]
             data['y_' + category] = data['y_' + category][:n_obs]
-    scaler = StandardScaler(mean=data['x_train'][..., 0].mean(), std=data['x_train'][..., 0].std())
+    scaler = StandardScaler(mean=data['x_train'][..., 0].mean(), std=data['x_train'][..., 0].std(), fill_zeroes=fill_zeroes)
     # Data format
     for category in ['train', 'val', 'test']:
         data['x_' + category][..., 0] = scaler.transform(data['x_' + category][..., 0])
@@ -256,23 +258,6 @@ def get_shared_arg_parser():
     parser.add_argument('--apt_size', default=10, type=int)
     parser.add_argument('--softmax_temp', default=1., type=float)
     parser.add_argument('--cat_feat_gc', action='store_true')
+    parser.add_argument('--fill_zeroes', action='store_true')
     parser.add_argument('--checkpoint', type=str, help='')
     return parser
-
-
-def plot_grad_flow(named_parameters):
-    import matplotlib.pyplot as plt
-    ave_grads = []
-    layers = []
-    for n, p in named_parameters:
-        if (p.requires_grad) and ("bias" not in n):
-            layers.append(n)
-            ave_grads.append(p.grad.abs().mean())
-    plt.plot(ave_grads, alpha=0.3, color="b")
-    plt.hlines(0, 0, len(ave_grads) + 1, linewidth=1, color="k")
-    plt.xticks(range(0, len(ave_grads), 1), layers, rotation="vertical")
-    plt.xlim(xmin=0, xmax=len(ave_grads))
-    plt.xlabel("Layers")
-    plt.ylabel("Average Gradient")
-    plt.title("Gradient flow")
-    plt.grid(True)
