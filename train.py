@@ -13,19 +13,6 @@ from util import calc_tstep_metrics
 from exp_results import summary
 
 
-def load_checkpoint(model, state_dict):
-    """If ckpt_path was trained for a different sequence length.
-     It is assumed that ckpt was trained to predict a subset of timesteps."""
-    bk, wk = ['end_conv_2.bias', 'end_conv_2.weight']  # only weights that depend on seq_length
-    b, w = state_dict.pop(bk), state_dict.pop(wk)
-    model.load_state_dict(state_dict, strict=False)
-    cur_state_dict = model.state_dict()
-    cur_state_dict[bk][:b.shape[0]] = b
-    cur_state_dict[wk][:w.shape[0]] = w
-    model.load_state_dict(cur_state_dict)
-    return model
-
-
 def main(args, **model_kwargs):
     device = torch.device(args.device)
     data = util.load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size, n_obs=args.n_obs, fill_zeroes=args.fill_zeroes)
@@ -34,14 +21,14 @@ def main(args, **model_kwargs):
 
     model = GWNet.from_args(args, device, supports, aptinit, **model_kwargs)
     if args.checkpoint:
-        model = load_checkpoint(model, torch.load(args.checkpoint))
+        model.load_checkpoint(torch.load(args.checkpoint))
     model.to(device)
     engine = Trainer.from_args(model, scaler, args)
     metrics = []
     best_model_save_path = os.path.join(args.save, 'best_model.pth')
     lowest_mae_yet = 100  # high value, will get overwritten
     mb = progress_bar(list(range(1, args.epochs + 1)))
-    since_best = 0
+    epochs_since_best_mae = 0
     for _ in mb:
         train_loss, train_mape, train_rmse = [], [], []
         data['train_loader'].shuffle()
@@ -67,13 +54,13 @@ def main(args, **model_kwargs):
         if m.valid_loss < lowest_mae_yet:
             torch.save(engine.model.state_dict(), best_model_save_path)
             lowest_mae_yet = m.valid_loss
-            since_best = 0
+            epochs_since_best_mae = 0
         else:
-            since_best += 1
+            epochs_since_best_mae += 1
         met_df = pd.DataFrame(metrics)
         mb.comment = f'best val_loss: {met_df.valid_loss.min(): .3f}, current val_loss: {m.valid_loss:.3f}, current train loss: {m.train_loss: .3f}'
         met_df.round(6).to_csv(f'{args.save}/metrics.csv')
-        if since_best >= args.es_patience: break  #
+        if epochs_since_best_mae >= args.es_patience: break
     # Metrics on test data
     engine.model.load_state_dict(torch.load(best_model_save_path))
     realy = torch.Tensor(data['y_test']).transpose(1, 3)[:, 0, :, :].to(device)

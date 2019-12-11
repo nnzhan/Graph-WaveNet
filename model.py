@@ -107,16 +107,26 @@ class GWNet(nn.Module):
 
     @classmethod
     def from_args(cls, args, device, supports, aptinit, **kwargs):
-        defaults =  dict(dropout=args.dropout, supports=supports,
-                    do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=aptinit,
-                    in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
-                    softmax_temp=args.softmax_temp,
-                    residual_channels=args.nhid, dilation_channels=args.nhid,
-                    skip_channels=args.nhid * 8, end_channels=args.nhid * 16,
-                    cat_feat_gc=args.cat_feat_gc)
+        defaults = dict(dropout=args.dropout, supports=supports,
+                        do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=aptinit,
+                        in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
+                        softmax_temp=args.softmax_temp,
+                        residual_channels=args.nhid, dilation_channels=args.nhid,
+                        skip_channels=args.nhid * 8, end_channels=args.nhid * 16,
+                        cat_feat_gc=args.cat_feat_gc)
         defaults.update(**kwargs)
         model = cls(device, args.num_nodes, **defaults)
         return model
+
+    def load_checkpoint(self, state_dict):
+        """It is assumed that ckpt was trained to predict a subset of timesteps."""
+        bk, wk = ['end_conv_2.bias', 'end_conv_2.weight']  # only weights that depend on seq_length
+        b, w = state_dict.pop(bk), state_dict.pop(wk)
+        self.load_state_dict(state_dict, strict=False)
+        cur_state_dict = self.state_dict()
+        cur_state_dict[bk][:b.shape[0]] = b
+        cur_state_dict[wk][:w.shape[0]] = w
+        self.load_state_dict(cur_state_dict)
 
     @property
     def conv_group(self):
