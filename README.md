@@ -10,30 +10,34 @@ This is the original pytorch implementation of Graph WaveNet in the following pa
 ## Requirements
 - python 3
 - pytorch
-- scipy
-- numpy
-- pandas
-- pyaml
+- rest are in requirements.txt
 
 
 ## Data Preparation
 
 ### Step1: Download METR-LA and PEMS-BAY data from [Google Drive](https://drive.google.com/open?id=10FOTa6HXPqX8Pf5WRoRwcFnW9BrNZEIX) or [Baidu Yun](https://pan.baidu.com/s/14Yy9isAIZYdU__OYEQGa_g) links provided by [DCRNN](https://github.com/liyaguang/DCRNN).
 
-### Step2: Follow [DCRNN](https://github.com/liyaguang/DCRNN)'s scripts to preprocess data.
+### Step2:
 
 ```
 # Create data directories
 mkdir -p data/{METR-LA,PEMS-BAY}
 
 # METR-LA
-python -m scripts.generate_training_data --output_dir=data/METR-LA --traffic_df_filename=data/metr-la.h5
+python generate_training_data.py --output_dir=data/METR-LA --traffic_df_filename=data/metr-la.h5
 
 # PEMS-BAY
-python -m scripts.generate_training_data --output_dir=data/PEMS-BAY --traffic_df_filename=data/pems-bay.h5
+python generate_training_data.py --output_dir=data/PEMS-BAY --traffic_df_filename=data/pems-bay.h5
 
 ```
-## Experiments
+## New Experiment Command
+```
+expid=bs_64
+mkdir $expid
+python train.py --batch_size 64 --learning_rate .004 --do_graph_conv --addaptadj  --randomadj   --save $expid | tee -a $expid.log
+```
+
+## Old Experiment Commands
 Train models configured in Table 3 of the paper.
 
 ```
