@@ -54,7 +54,7 @@ class DataLoader(object):
 
 class StandardScaler():
 
-    def __init__(self, mean, std, fill_zeroes=False):
+    def __init__(self, mean, std, fill_zeroes=True):
         self.mean = mean
         self.std = std
         self.fill_zeroes = fill_zeroes
