@@ -9,8 +9,8 @@ This is the original pytorch implementation of Graph WaveNet in the following pa
 
 ## Requirements
 - python 3
-- pytorch
-- rest are in requirements.txt
+- see `requirements.txt`
+
 
 
 ## Data Preparation

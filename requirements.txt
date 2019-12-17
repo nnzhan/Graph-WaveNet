@@ -1,9 +1,8 @@
-durbango
-tables
-tqdm
 matplotlib
 numpy
-argparse
-fastprogress
+scipy
 pandas
-funcy
+torch
+argparse
+durbango
+fastprogress
