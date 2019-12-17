@@ -1,0 +1,9 @@
+durbango
+tables
+tqdm
+matplotlib
+numpy
+argparse
+fastprogress
+pandas
+funcy
