@@ -34,13 +34,12 @@ class GraphConvNet(nn.Module):
 
 class GWNet(nn.Module):
     def __init__(self, device, num_nodes, dropout=0.3, supports=None, do_graph_conv=True,
-                 softmax_temp=1., addaptadj=True, aptinit=None, in_dim=2, out_dim=12,
+                 addaptadj=True, aptinit=None, in_dim=2, out_dim=12,
                  residual_channels=32, dilation_channels=32, cat_feat_gc=False,
                  skip_channels=256, end_channels=512, kernel_size=2, blocks=4, layers=2,
                  apt_size=10):
         super().__init__()
         self.dropout = dropout
-        self.softmax_temp = softmax_temp
         self.blocks = blocks
         self.layers = layers
         self.do_graph_conv = do_graph_conv
@@ -110,7 +109,6 @@ class GWNet(nn.Module):
         defaults = dict(dropout=args.dropout, supports=supports,
                         do_graph_conv=args.do_graph_conv, addaptadj=args.addaptadj, aptinit=aptinit,
                         in_dim=args.in_dim, apt_size=args.apt_size, out_dim=args.seq_length,
-                        softmax_temp=args.softmax_temp,
                         residual_channels=args.nhid, dilation_channels=args.nhid,
                         skip_channels=args.nhid * 8, end_channels=args.nhid * 16,
                         cat_feat_gc=args.cat_feat_gc)
@@ -128,17 +126,6 @@ class GWNet(nn.Module):
         cur_state_dict[wk][:w.shape[0]] = w
         self.load_state_dict(cur_state_dict)
 
-    @property
-    def conv_group(self):
-        bk, wk = ['end_conv_2.bias', 'end_conv_2.weight']
-        grpa = [v for k, v in self.named_parameters() if k not in [bk, wk]]
-        grpb = [v for k, v in self.named_parameters() if k in [bk, wk]]
-        return grpa, grpb
-
-    def freeze_group_b(self):
-        for param in self.conv_group[1]:
-            param.requires_grad = False
-
     def forward(self, x):
         # Input shape is (bs, features, n_nodes, n_timesteps)
         in_len = x.size(3)
@@ -155,7 +142,7 @@ class GWNet(nn.Module):
         adjacency_matrices = self.fixed_supports
         # calculate the current adaptive adj matrix once per iteration
         if self.addaptadj:
-            adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)) / self.softmax_temp, dim=1)
+            adp = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec2)), dim=1)
             adjacency_matrices = self.fixed_supports + [adp]
 
         # WaveNet layers

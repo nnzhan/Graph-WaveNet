@@ -93,29 +93,17 @@ def generate_train_val_test(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output_dir", type=str, default="data/METR-LA", help="Output directory."
-    )
-    parser.add_argument(
-        "--traffic_df_filename",
-        type=str,
-        default="data/metr-la.h5",
-        help="Raw traffic readings.",
-    )
-    parser.add_argument(
-        "--seq_length_x",
-        type=int,
-        default=12,
-        help="Sequence Length.",
-    )
+    parser.add_argument("--output_dir", type=str, default="data/METR-LA", help="Output directory.")
+    parser.add_argument("--traffic_df_filename", type=str, default="data/metr-la.h5", help="Raw traffic readings.",)
+    parser.add_argument("--seq_length_x", type=int, default=12, help="Sequence Length.",)
     parser.add_argument("--seq_length_y", type=int, default=12, help="Sequence Length.",)
     parser.add_argument("--y_start", type=int, default=1, help="Y pred start", )
     parser.add_argument("--dow", action='store_true',)
 
     args = parser.parse_args()
     if os.path.exists(args.output_dir):
-      reply = str(input(f'{args.output_dir} exists. Do you want to overwrite it? (y/n)')).lower().strip()
-      if reply[0] == 'n': exit
+        reply = str(input(f'{args.output_dir} exists. Do you want to overwrite it? (y/n)')).lower().strip()
+        if reply[0] != 'y': exit
     else:
         os.makedirs(args.output_dir)
     generate_train_val_test(args)
