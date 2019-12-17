@@ -1,0 +1,6 @@
+matplotlib
+numpy
+scipy
+pandas
+torch
+argparse
