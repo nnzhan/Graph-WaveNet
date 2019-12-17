@@ -33,7 +33,9 @@ python generate_training_data.py --output_dir=data/PEMS-BAY --traffic_df_filenam
 ```
 
 ## Train Commands
-Model that gets (3.00 - 3.02 MAE)
+Note: train.py saves metrics to a directory specified by the `--save` arg in metrics.csv and test_metrics.csv
+
+Model that gets (3.00 - 3.02 Test MAE, ~2.73 Validation MAE)
 ```
 python train.py --cat_feat_gc --fill_zeroes --do_graph_conv --addaptadj  --randomadj --es_patience 20 --save logs/baseline_v2
 ```
@@ -66,3 +68,5 @@ These flags are (somewhat) documented in util.py.
 
 Run unitests with `pytest`
 
+### Possible Improvements
+* move redundant `.transpose(1,3)` to dataloader or `load_dataset`

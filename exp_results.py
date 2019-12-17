@@ -1,3 +1,4 @@
+"""Utilities for comparing metrics saved by train.py"""
 import pandas as pd
 import os
 from glob import glob
@@ -33,5 +34,5 @@ def plot_loss_curve(log_dir):
     plt.axhline(d.valid_loss.min())
     print(d.valid_loss.idxmin())
 
-def make_table():
+def make_results_table():
     return pd.DataFrame({os.path.basename(c): summary(c) for c in glob('logs/*')}).T.sort_values('valid_loss')

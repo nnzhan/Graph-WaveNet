@@ -5,6 +5,4 @@ preds.csv
 .ipynb_checkpoints/
 data/
 .DS_Store
-*.xlsx
-*.mp
 *.pkl
