@@ -254,7 +254,7 @@ def get_shared_arg_parser():
     parser.add_argument('--num_nodes', type=int, default=207, help='number of nodes')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size')
     parser.add_argument('--dropout', type=float, default=0.3, help='dropout rate')
-    parser.add_argument('--n_obs', default=None, help='Only use this many observations')
+    parser.add_argument('--n_obs', default=None, help='Only use this many observations. For unit testing.')
     parser.add_argument('--apt_size', default=10, type=int)
     parser.add_argument('--cat_feat_gc', action='store_true')
     parser.add_argument('--fill_zeroes', action='store_true')
