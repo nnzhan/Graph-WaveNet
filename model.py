@@ -51,7 +51,7 @@ class GWNet(nn.Module):
             self.start_conv = nn.Conv2d(in_channels=1,  # hard code to avoid errors
                                         out_channels=residual_channels,
                                         kernel_size=(1, 1))
-            self.cat_feature_conv = nn.Conv2d(in_channels=1,
+            self.cat_feature_conv = nn.Conv2d(in_channels=in_dim - 1,
                                               out_channels=residual_channels,
                                               kernel_size=(1, 1))
         else:
@@ -132,7 +132,7 @@ class GWNet(nn.Module):
         if in_len < self.receptive_field:
             x = nn.functional.pad(x, (self.receptive_field - in_len, 0, 0, 0))
         if self.cat_feat_gc:
-            f1, f2 = x[:,[0]], x[:,[1]]
+            f1, f2 = x[:, [0]], x[:, 1:]
             x1 = self.start_conv(f1)
             x2 = F.leaky_relu(self.cat_feature_conv(f2))
             x = x1 + x2
