@@ -2,5 +2,7 @@ matplotlib
 numpy
 scipy
 pandas
-torch
+torch==1.10.2
 argparse
+tables
+scikit-learn

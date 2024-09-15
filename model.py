@@ -203,9 +203,10 @@ class gwnet(nn.Module):
         x = F.relu(skip)
         x = F.relu(self.end_conv_1(x))
         x = self.end_conv_2(x)
+
+        x = x[:, :, :, -1:]  # Taking the last timestep
+        
         return x
-
-
 
 
 

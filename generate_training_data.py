@@ -28,10 +28,12 @@ def generate_graph_seq2seq_io_data(
     num_samples, num_nodes = df.shape
     data = np.expand_dims(df.values, axis=-1)
     feature_list = [data]
+
     if add_time_in_day:
-        time_ind = (df.index.values - df.index.values.astype("datetime64[D]")) / np.timedelta64(1, "D")
+        time_ind = (df.index.values - df.index.values.astype("datetime64[D]")) / np.timedelta64(1, "D") # NOTE: normaliza el tiempo en dias
         time_in_day = np.tile(time_ind, [1, num_nodes, 1]).transpose((2, 1, 0))
         feature_list.append(time_in_day)
+
     if add_day_in_week:
         dow = df.index.dayofweek
         dow_tiled = np.tile(dow, [1, num_nodes, 1]).transpose((2, 1, 0))
@@ -62,7 +64,7 @@ def generate_train_val_test(args):
         df,
         x_offsets=x_offsets,
         y_offsets=y_offsets,
-        add_time_in_day=True,
+        add_time_in_day=False,
         add_day_in_week=args.dow,
     )
 
@@ -93,10 +95,10 @@ def generate_train_val_test(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output_dir", type=str, default="data/METR-LA", help="Output directory.")
-    parser.add_argument("--traffic_df_filename", type=str, default="data/metr-la.h5", help="Raw traffic readings.",)
+    parser.add_argument("--output_dir", type=str, default="data/MAX-TEMP", help="Output directory.")
+    parser.add_argument("--traffic_df_filename", type=str, default="data/max_pivot_temperatures.h5", help="Raw traffic readings.",)
     parser.add_argument("--seq_length_x", type=int, default=12, help="Sequence Length.",)
-    parser.add_argument("--seq_length_y", type=int, default=12, help="Sequence Length.",)
+    parser.add_argument("--seq_length_y", type=int, default=1, help="Sequence Length.",)
     parser.add_argument("--y_start", type=int, default=1, help="Y pred start", )
     parser.add_argument("--dow", action='store_true',)
 
